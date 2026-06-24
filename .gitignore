@@ -15,6 +15,10 @@ data/
 *.tfstate.*
 crash.log
 
+#Secrets
+*.json
+terraform.tfvars
+
 # Distribution / packaging
 .Python
 build/
