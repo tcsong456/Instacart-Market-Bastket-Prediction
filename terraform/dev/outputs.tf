@@ -2,8 +2,8 @@ output "raw_bucket" {
   value = google_storage_bucket.raw_bucket.name
 }
 
-output "bronze_bucket" {
-  value = google_storage_bucket.bronze_bucket.name
+output "curated_bucket" {
+  value = google_storage_bucket.curated_bucket.name
 }
 
 output "dataproc_etl_service_account" {

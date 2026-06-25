@@ -11,6 +11,6 @@ variable "raw_bucket_name" {
   type = string
 }
 
-variable "bronze_bucket_name" {
+variable "curated_bucket_name" {
   type = string
 }

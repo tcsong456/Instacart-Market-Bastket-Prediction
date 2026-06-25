@@ -17,8 +17,8 @@ resource "google_storage_bucket" "raw_bucket" {
   depends_on = [google_project_service.required_apis]
 }
 
-resource "google_storage_bucket" "bronze_bucket" {
-  name          = var.bronze_bucket_name
+resource "google_storage_bucket" "curated_bucket" {
+  name          = var.curated_bucket_name
   location      = var.region
   force_destroy = false
 
@@ -29,7 +29,7 @@ resource "google_storage_bucket" "bronze_bucket" {
   }
 
   labels = {
-    layer = "bronze"
+    layer = "curated"
     env   = "dev"
   }
 

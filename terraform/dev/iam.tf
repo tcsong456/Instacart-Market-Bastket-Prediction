@@ -10,8 +10,8 @@ resource "google_storage_bucket_iam_member" "raw_bucket_reader" {
   member = "serviceAccount:${google_service_account.dataproc_etl.email}"
 }
 
-resource "google_storage_bucket_iam_member" "bronze_bucket_writer" {
-  bucket = google_storage_bucket.bronze_bucket.name
+resource "google_storage_bucket_iam_member" "curated_bucket_writer" {
+  bucket = google_storage_bucket.curated_bucket.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.dataproc_etl.email}"
 }

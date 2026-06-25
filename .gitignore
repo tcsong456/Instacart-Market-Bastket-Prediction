@@ -6,7 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
-#raw data
+#Rubbish
+trash.py
+
+#Raw data
 data/
 
 #Terraform
