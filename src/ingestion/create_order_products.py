@@ -1,7 +1,3 @@
-import os
-os.environ["HADOOP_HOME"] = r"C:\hadoop"
-os.environ["PATH"] = r"C:\hadoop\bin;" + os.environ["PATH"]
-
 import argparse
 from pathlib import Path
 from pyspark.sql import SparkSession
@@ -25,28 +21,28 @@ def build_df(spark,
         spark.read
         .option('header', True)
         .option('inferSchema', True)
-        .csv(f'{args.sample_dir}/order_products__prior.csv')
+        .csv(f'{sample_dir}/order_products__prior.csv')
     )
 
     train_products = (
         spark.read
         .option('header', True)
         .option('inferSchema', True)
-        .csv(f'{args.sample_dir}/order_products__train.csv')
+        .csv(f'{sample_dir}/order_products__train.csv')
     )
 
     orders = (
         spark.read
         .option('header', True)
         .option('inferSchema', True)
-        .csv(f'{args.sample_dir}/orders.csv')
+        .csv(f'{sample_dir}/orders.csv')
     )
 
     products = (
         spark.read
         .option('header', True)
         .option('inferSchema', True)
-        .csv(f'{args.sample_dir}/products.csv')
+        .csv(f'{sample_dir}/products.csv')
     )
 
     order_products = prior_products.unionByName(train_products)
