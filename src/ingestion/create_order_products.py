@@ -1,17 +1,20 @@
 import argparse
 from pathlib import Path
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lit
+from pyspark.sql.functions import col
+
 
 def create_spark():
     return (SparkSession.builder
             .appName('instacart-etl')
             .getOrCreate())
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample-dir', required=True, type=str)
     return parser.parse_args()
+
 
 def build_df(spark,
              args):
@@ -71,6 +74,7 @@ def build_df(spark,
             )
         )
     return df
+
 
 if __name__ == '__main__':
     args = parse_args()

@@ -9,6 +9,9 @@ __pycache__/
 #Rubbish
 trash.py
 
+#Trail shell script
+trail.sh
+
 #Raw data
 data/
 

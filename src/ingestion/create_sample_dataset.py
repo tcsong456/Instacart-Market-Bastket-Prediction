@@ -1,7 +1,7 @@
 import pandas as pd
 from pathlib import Path
 
-RAW_DIR = Path('data')
+RAW_DIR = Path('data/raw')
 SAMPLE_DIR = Path('data/sample')
 SAMPLE_N = 500
 
@@ -28,7 +28,7 @@ for filename in ['order_products__prior.csv', 'order_products__train.csv']:
             mode='w' if first_chunk else 'a',
             header=first_chunk
         )
-        first_chunk=False
+        first_chunk = False
 
 for filename in ['aisles.csv', 'departments.csv', 'products.csv']:
     df = pd.read_csv(RAW_DIR / filename)
