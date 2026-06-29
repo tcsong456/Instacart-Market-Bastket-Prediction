@@ -86,7 +86,7 @@ def test_read_missing_file(spark, tmp_path):
         read_csv(path, spark, schema).count()
 
 
-def test_fill_nan_and_cast(spark, tmp_path):
+def test_fill_nan_and_cast(spark):
     df = spark.createDataFrame(
         [
             (5, '10', 'Alice'),
@@ -110,6 +110,7 @@ def test_fill_nan_and_cast(spark, tmp_path):
 
     rows = df.orderBy('id').collect()
 
+    assert rows[0]['id'] == 5
     assert rows[1]['value'] == 100
     assert rows[2]['name'] == 'Unknown'
-    assert dict(df.dtypes)['value'] == 'int'
+    assert dict(df.dtypes)['value'] == 'int' and dict(df.dtypes)['name'] == 'string'
