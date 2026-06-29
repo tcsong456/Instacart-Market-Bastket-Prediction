@@ -2,6 +2,7 @@ import sys
 import pytest
 import pandas as pd
 from pathlib import Path
+from src.common.spark import create_spark_session
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -50,3 +51,10 @@ def tiny_fake_testset(tmp_path):
     products.to_csv(raw_dir / "products.csv", index=False)
 
     return raw_dir
+
+
+@pytest.fixture(scope='session')
+def spark():
+    spark = create_spark_session('unit-test')
+    yield spark
+    spark.stop()
