@@ -147,7 +147,7 @@ def validate_join_counts(
     if joined_df.count() != order_products.count():
         raise ValueError(
             (
-                f'joined row count mismatch with original row count: '
+                f'Joined row count mismatch with original row count: '
                 f'joined_count={joined_df.count()}, '
                 f'raw_count={order_products.count()}'
             )
@@ -176,7 +176,7 @@ def build_order_products() -> None:
     df = fill_nans(df, NULL_COLS)
 
     write_parquet(
-        path=args.path / 'order_products_sample',
+        path = args.path / 'order_products_sample',
         df=df
     )
     spark.stop()
