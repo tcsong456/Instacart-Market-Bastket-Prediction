@@ -8,8 +8,25 @@ LOOKUP_FILES = ["aisles.csv", "departments.csv", "products.csv"]
 ORDER_PRODUCT_FILES = ["order_products__prior.csv", "order_products__train.csv"]
 
 
-def sample_users(order: pd.DataFrame, sample_n: int, seed: int) -> pd.Series:
-    return order['user_id'].drop_duplicates().sample(n=sample_n, random_state=seed)
+def validate_inputs(raw_dir: Path, sample_n: int) -> None:
+    files = LOOKUP_FILES + ORDER_PRODUCT_FILES + ['orders.csv']
+    missing_files = [filename for filename in files if not (raw_dir / filename).exists()]
+    if missing_files:
+        missing_filenames = ' '.join([f[:-4] for f in missing_files])
+        raise FileNotFoundError(
+            f"Missing required input files in {raw_dir}: {missing_filenames}"
+        )
+    
+    orders = pd.read_csv(raw_dir / 'orders.csv', usecols=['user_id'])
+    unique_users = orders['user_id'].nunique()
+    if sample_n > unique_users:
+        raise ValueError(
+            f'sample_n={sample_n} is greater than number of unique users '
+            f'available: {unique_users}'
+        )
+
+def sample_users(orders: pd.DataFrame, sample_n: int, seed: int) -> pd.Series:
+    return orders['user_id'].drop_duplicates().sample(n=sample_n, random_state=seed)
 
 
 def filter_orders_by_users(orders: pd.DataFrame, sample_users: pd.Series) -> pd.DataFrame:
@@ -24,16 +41,23 @@ def write_filtered_order_products(
         order_ids: set[int]
         ) -> None:
     first_chunk = True
+    wrote_any_rows = False
+    output_dir = sample_dir / filename
     for chunk in pd.read_csv(raw_dir / filename, chunksize=chunksize):
         filtered_chunk = chunk[chunk['order_id'].isin(order_ids)]
         if not filtered_chunk.empty:
             filtered_chunk.to_csv(
-                sample_dir / filename,
+                output_dir,
                 index=False,
                 header=first_chunk,
                 mode='w' if first_chunk else 'a'
             )
             first_chunk = False
+            wrote_any_rows=True
+        
+    if not wrote_any_rows:
+        columns = pd.read_csv(raw_dir / filename, nrows=0).columns
+        pd.DataFrame(columns=columns).to_csv(output_dir, index=False)
 
 
 def copy_lookup_files(raw_dir: Path, sample_dir: Path) -> None:
@@ -41,7 +65,7 @@ def copy_lookup_files(raw_dir: Path, sample_dir: Path) -> None:
         shutil.copy2(raw_dir / filename, sample_dir / filename)
 
 
-def arg_parse() -> argparse.Namespace:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--raw-dir',
@@ -78,6 +102,7 @@ def main(
     seed: int,
     sample_n: int
 ) -> None:
+    validate_inputs(raw_dir, sample_n)
     sample_dir.mkdir(parents=True, exist_ok=True)
 
     orders = pd.read_csv(raw_dir / 'orders.csv')
@@ -99,7 +124,7 @@ def main(
 
 
 if __name__ == '__main__':
-    args = arg_parse()
+    args = parse_args()
     main(raw_dir=args.raw_dir,
          sample_dir=args.sample_dir,
          chunk_size=args.chunk_size,

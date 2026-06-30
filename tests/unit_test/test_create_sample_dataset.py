@@ -1,9 +1,46 @@
+import pytest
 import pandas as pd
 from src.ingestion.create_sample_dataset import (
     sample_users,
+    validate_inputs,
+    copy_lookup_files,
     filter_orders_by_users,
     write_filtered_order_products
 )
+
+
+def test_validate_inputs_missing_files_raises(tiny_fake_testset) -> None:
+    input_dir = tiny_fake_testset / 'data'
+    input_dir.mkdir()
+
+    with pytest.raises(FileNotFoundError, match='Missing required input files in'):
+        validate_inputs(input_dir, sample_n=2)
+
+
+def test_sample_n_larger_than_unique_users(tiny_fake_testset) -> None:
+    with pytest.raises(ValueError, match='greater than number of unique users '):
+        validate_inputs(tiny_fake_testset, sample_n=999)
+
+
+def test_copy_lookup_files(tiny_fake_testset, tmp_path):
+    src_dir = tiny_fake_testset
+    dst_dir = tmp_path / 'sample'
+    dst_dir.mkdir()
+
+    copy_lookup_files(src_dir, dst_dir)
+
+    files = [
+        'aisles.csv',
+        'departments.csv',
+        'products.csv'
+    ]
+
+    for file in files:
+        assert (dst_dir / file).exists()
+    
+    src_products = pd.read_csv(tiny_fake_testset / 'products.csv')
+    dst_products = pd.read_csv(dst_dir / 'products.csv')
+    pd.testing.assert_frame_equal(src_products, dst_products, check_exact=False, rtol=1e-6)
 
 
 def test_same_seed_same_users(tiny_fake_testset):
@@ -12,7 +49,7 @@ def test_same_seed_same_users(tiny_fake_testset):
     user1 = sample_users(orders, 2, 19810)
     user2 = sample_users(orders, 2, 19810)
 
-    return user1.tolist() == user2.tolist()
+    assert user1.tolist() == user2.tolist()
 
 
 def test_sample_users_are_unique(tiny_fake_testset):
@@ -20,7 +57,7 @@ def test_sample_users_are_unique(tiny_fake_testset):
 
     sampled_users = sample_users(orders, 3, 19810)
 
-    return sampled_users.is_unique
+    assert sampled_users.is_unique
 
 
 def test_sampled_users_count(tiny_fake_testset):
@@ -77,7 +114,7 @@ def test_filtered_orders_header_only_once(tiny_fake_testset, tmp_path):
     assert lines.count(header) == 1
 
 
-def test_filtered_orders_produce_no_mathcing_results(tiny_fake_testset, tmp_path):
+def test_filtered_orders_produce_no_matching_results(tiny_fake_testset, tmp_path):
     sample_dir = tmp_path / 'sample'
     sample_dir.mkdir()
 
@@ -90,7 +127,6 @@ def test_filtered_orders_produce_no_mathcing_results(tiny_fake_testset, tmp_path
     )
 
     output_dir = sample_dir / 'order_products__prior.csv'
-    assert not output_dir.exists()
-    if output_dir.exists():
-        result = pd.read_csv(output_dir)
-        assert result.empty
+    df = pd.read_csv(output_dir)
+    assert len(df) == 0
+    assert set(df.columns) == {'order_id', 'product_id', 'add_to_cart_order', 'reordered'}

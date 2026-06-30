@@ -45,10 +45,22 @@ def tiny_fake_testset(tmp_path):
         "department_id": [10, 10, 20, 20, 30],
     })
 
+    aisles = pd.DataFrame({
+    "aisle_id": [1, 2, 3],
+    "aisle": ["fresh", "dairy", "snacks"],
+})
+
+    departments = pd.DataFrame({
+        "department_id": [10, 20, 30],
+        "department": ["produce", "frozen", "pantry"],
+    })
+
     orders.to_csv(raw_dir / "orders.csv", index=False)
     prior.to_csv(raw_dir / "order_products__prior.csv", index=False)
     train.to_csv(raw_dir / "order_products__train.csv", index=False)
     products.to_csv(raw_dir / "products.csv", index=False)
+    aisles.to_csv(raw_dir / "aisles.csv", index=False)
+    departments.to_csv(raw_dir / "departments.csv", index=False)
 
     return raw_dir
 
