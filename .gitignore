@@ -12,6 +12,7 @@ trash.py
 #Trial shell script
 trail.sh
 **/trial_scripts/
+**/etl_run.py
 
 #Raw data
 data/
