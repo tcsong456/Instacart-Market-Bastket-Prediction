@@ -37,7 +37,7 @@ def test_copy_lookup_files(tiny_fake_testset, tmp_path):
 
     for file in files:
         assert (dst_dir / file).exists()
-    
+
     src_products = pd.read_csv(tiny_fake_testset / 'products.csv')
     dst_products = pd.read_csv(dst_dir / 'products.csv')
     pd.testing.assert_frame_equal(src_products, dst_products, check_exact=False, rtol=1e-6)

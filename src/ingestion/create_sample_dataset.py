@@ -16,7 +16,7 @@ def validate_inputs(raw_dir: Path, sample_n: int) -> None:
         raise FileNotFoundError(
             f"Missing required input files in {raw_dir}: {missing_filenames}"
         )
-    
+
     orders = pd.read_csv(raw_dir / 'orders.csv', usecols=['user_id'])
     unique_users = orders['user_id'].nunique()
     if sample_n > unique_users:
@@ -24,6 +24,7 @@ def validate_inputs(raw_dir: Path, sample_n: int) -> None:
             f'sample_n={sample_n} is greater than number of unique users '
             f'available: {unique_users}'
         )
+
 
 def sample_users(orders: pd.DataFrame, sample_n: int, seed: int) -> pd.Series:
     return orders['user_id'].drop_duplicates().sample(n=sample_n, random_state=seed)
@@ -53,8 +54,8 @@ def write_filtered_order_products(
                 mode='w' if first_chunk else 'a'
             )
             first_chunk = False
-            wrote_any_rows=True
-        
+            wrote_any_rows = True
+
     if not wrote_any_rows:
         columns = pd.read_csv(raw_dir / filename, nrows=0).columns
         pd.DataFrame(columns=columns).to_csv(output_dir, index=False)

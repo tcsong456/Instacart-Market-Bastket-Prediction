@@ -11,7 +11,8 @@ from pyspark.sql.types import (
     ByteType,
     ShortType,
     IntegerType,
-    StringType
+    StringType,
+    DoubleType
 )
 
 
@@ -33,7 +34,7 @@ ORDERS_SCHEMA = StructType([
     StructField('order_number', ByteType(), False),
     StructField('order_dow', ByteType(), False),
     StructField('order_hour_of_day', ByteType(), False),
-    StructField('days_since_prior_order', IntegerType(), True),
+    StructField('days_since_prior_order', DoubleType(), True),
 ])
 
 
@@ -154,33 +155,38 @@ def validate_join_counts(
         )
 
 
-def build_order_products() -> None:
+def build_order_products(
+    spark: SparkSession,
+    path: Path,
+    debug: bool = False
+) -> None:
     logging.basicConfig(level=logging.INFO)
-
-    args = parse_args()
-
-    spark = create_spark_session('instacart-basket')
 
     orders, products, order_prior, order_train = load_csv_data(
         spark=spark,
-        path_dir=args.path
+        path_dir=path
     )
 
     order_products = orders_prior_train_join(order_prior, order_train)
     df = full_join(order_products, orders, products)
     validate_join_counts(df, order_products)
 
-    if args.debug:
+    if debug:
         log_info(order_products, order_prior, order_train, df)
 
     df = fill_nans(df, NULL_COLS)
 
     write_parquet(
-        path = args.path / 'order_products_sample',
+        path=path / 'order_products_sample',
         df=df
     )
-    spark.stop()
 
 
 if __name__ == '__main__':
-    build_order_products()
+    args = parse_args()
+    spark = create_spark_session('instacart-basket')
+    build_order_products(
+        spark=spark,
+        path=args.path,
+        debug=args.debug
+    )
