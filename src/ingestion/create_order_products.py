@@ -1,10 +1,10 @@
 import logging
 import argparse
-from pathlib import Path
 from pyspark.sql import SparkSession, DataFrame
 from src.common.spark import create_spark_session
 from src.common.io import read_csv, write_parquet
 from src.common.cleaning import fillna_and_cast
+from src.common.utils import gcs_join
 from pyspark.sql.types import (
     StructField,
     StructType,
@@ -52,29 +52,29 @@ NULL_COLS = [
 
 
 def load_csv_data(
-    path_dir: Path,
+    path_dir: str,
     spark: SparkSession
 ) -> tuple[DataFrame, DataFrame, DataFrame, DataFrame]:
     orders = read_csv(
-        path=path_dir / 'orders.csv',
+        path=gcs_join(path_dir, 'orders.csv'),
         spark=spark,
         schema=ORDERS_SCHEMA
     )
 
     products = read_csv(
-        path=path_dir / 'products.csv',
+        path=gcs_join(path_dir, 'products.csv'),
         spark=spark,
         schema=PRODUCTS_SCHEMA
     )
 
     orders_prior = read_csv(
-        path=path_dir / 'order_products__prior.csv',
+        path=gcs_join(path_dir, 'order_products__prior.csv'),
         spark=spark,
         schema=ORDER_PRODUCTS_SCHEMA
     )
 
     orders_train = read_csv(
-        path=path_dir / 'order_products__train.csv',
+        path=gcs_join(path_dir, 'order_products__train.csv'),
         spark=spark,
         schema=ORDER_PRODUCTS_SCHEMA
     )
@@ -131,8 +131,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--path',
-        required=True,
-        type=Path
+        required=True
     )
     parser.add_argument(
         '--debug',
@@ -157,7 +156,7 @@ def validate_join_counts(
 
 def build_order_products(
     spark: SparkSession,
-    path: Path,
+    path: str,
     debug: bool = False
 ) -> None:
     logging.basicConfig(level=logging.INFO)
@@ -177,7 +176,7 @@ def build_order_products(
     df = fill_nans(df, NULL_COLS)
 
     write_parquet(
-        path=path / 'order_products_sample',
+        path=gcs_join(path, 'order_products'),
         df=df
     )
 

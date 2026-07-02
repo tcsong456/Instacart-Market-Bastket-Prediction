@@ -1,5 +1,4 @@
 import argparse
-from pathlib import Path
 from pyspark.sql import functions as F
 from pyspark.sql import SparkSession, DataFrame
 from src.common.io import read_parquet, write_parquet
@@ -10,13 +9,11 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--input-dir',
-        required=True,
-        type=Path
+        required=True
     )
     parser.add_argument(
         '--output-dir',
-        required=True,
-        type=Path
+        required=True
     )
     return parser.parse_args()
 
@@ -201,7 +198,7 @@ def build_user_level_data(df: DataFrame) -> DataFrame:
     return user_data
 
 
-def build_user_data(spark: SparkSession, input_dir: Path, output_dir: Path) -> None:
+def build_user_data(spark: SparkSession, input_dir: str, output_dir: str) -> None:
     df = read_parquet(input_dir, spark)
 
     order_group_data = build_order_level_data(df)
