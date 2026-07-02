@@ -5,3 +5,4 @@ exclude =
     __pycache__,
     .pytest_cache,
     .venv
+    src/ingestion/trial_scripts

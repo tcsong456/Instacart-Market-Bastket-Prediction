@@ -21,6 +21,23 @@ resource "google_storage_bucket" "data_bucket" {
   depends_on = [google_project_service.required_apis]
 }
 
+resource "google_storage_bucket" "curated_bucket" {
+  name          = "${var.curated_bucket_name}-${random_id.bucket_suffix.hex}"
+  location      = var.region
+  force_destroy = false
+
+  uniform_bucket_level_access = true
+
+  versioning {
+    enabled = true
+  }
+
+  labels = {
+    layer = "curated_data"
+    env   = "dev"
+  }
+}
+
 resource "google_storage_bucket" "dataproc_staging" {
   name          = "${var.dataproc_staging_bucket_name}-${random_id.bucket_suffix.hex}"
   location      = var.region

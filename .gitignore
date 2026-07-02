@@ -13,6 +13,7 @@ trash.py
 trail.sh
 **/trial_scripts/
 **/etl_run.py
+*.zip
 
 #Raw data
 data/

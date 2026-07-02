@@ -8,7 +8,7 @@ resource "google_service_account" "dataproc_etl" {
   depends_on   = [google_project_service.required_apis]
 }
 
-resource "google_storage_bucket_iam_member" "data_bucket_reader" {
+resource "google_storage_bucket_iam_member" "data_bucket_admin" {
   bucket = google_storage_bucket.data_bucket.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.dataproc_etl.email}"
@@ -16,6 +16,12 @@ resource "google_storage_bucket_iam_member" "data_bucket_reader" {
 
 resource "google_storage_bucket_iam_member" "dataproc_staging_admin" {
   bucket = google_storage_bucket.dataproc_staging.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.dataproc_etl.email}"
+}
+
+resource "google_storage_bucket_iam_member" "curatd_bucket_admin" {
+  bucket = google_storage_bucket.curated_bucket.name
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.dataproc_etl.email}"
 }
