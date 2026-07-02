@@ -1,5 +1,9 @@
-resource "google_storage_bucket" "raw_bucket" {
-  name          = var.raw_bucket_name
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+resource "google_storage_bucket" "data_bucket" {
+  name          = "${var.data_bucket_name}-${random_id.bucket_suffix.hex}"
   location      = var.region
   force_destroy = false
 
@@ -10,15 +14,15 @@ resource "google_storage_bucket" "raw_bucket" {
   }
 
   labels = {
-    layer = "raw"
+    layer = "normal_data"
     env   = "dev"
   }
 
   depends_on = [google_project_service.required_apis]
 }
 
-resource "google_storage_bucket" "curated_bucket" {
-  name          = var.curated_bucket_name
+resource "google_storage_bucket" "dataproc_staging" {
+  name          = "${var.dataproc_staging_bucket_name}-${random_id.bucket_suffix.hex}"
   location      = var.region
   force_destroy = false
 
@@ -29,7 +33,7 @@ resource "google_storage_bucket" "curated_bucket" {
   }
 
   labels = {
-    layer = "curated"
+    layer = "dataproc"
     env   = "dev"
   }
 
