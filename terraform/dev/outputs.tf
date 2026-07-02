@@ -1,9 +1,9 @@
-output "raw_bucket" {
-  value = google_storage_bucket.raw_bucket.name
+output "data_bucket_uri" {
+  value = "gs://${google_storage_bucket.data_bucket.name}"
 }
 
-output "curated_bucket" {
-  value = google_storage_bucket.curated_bucket.name
+output "dataproc_staging_bucket" {
+  value = "gs://${google_storage_bucket.dataproc_staging.name}"
 }
 
 output "dataproc_etl_service_account" {

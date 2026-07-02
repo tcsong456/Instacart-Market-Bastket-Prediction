@@ -12,6 +12,7 @@ ALLOWED_FILES = {
     "order_products__train.csv",
 }
 
+
 def upload_to_gcs(
     project_id: str,
     bucket_name: str,
@@ -19,8 +20,10 @@ def upload_to_gcs(
     overwrite: bool = False
 ):
     if not local_data_dir.exists():
-        raise FileNotFoundError(f'local data dir does not exist: {local_data_dir}')
-    
+        raise FileNotFoundError(
+            f'local data dir does not exist: {local_data_dir}'
+        )
+
     upload_count = 0
     client = storage.Client(project=project_id)
     bucket = client.bucket(bucket_name)
@@ -37,11 +40,17 @@ def upload_to_gcs(
         print(f"Uploading {blob_path}")
         blob.upload_from_filename(file)
         upload_count += 1
-    
+
     if upload_count == 0:
-        print('No files uploaded because no file change detected or no allowed files existed')
-        
+        print(
+            (
+                'No files uploaded because no file '
+                'change detected or no allowed files existed'
+            )
+        )
+
     print(f"Upload completed. Uploaded {upload_count} file(s).")
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -68,6 +77,7 @@ def parse_args():
         help="whether the data already on the bucket can be replaced"
     )
     return parser.parse_args()
+
 
 if __name__ == '__main__':
     args = parse_args()
