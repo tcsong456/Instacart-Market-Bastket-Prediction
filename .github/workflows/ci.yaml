@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branch: [main]
+    branches: [main]
   pull_request:
-    branch: [main]
+    branches: [main]
 
 jobs:
   test:
@@ -31,5 +31,7 @@ jobs:
           pip install -r requirements.txt
       
       - name: run tests
+        enve: 
+          PYTHONPATH: ${{ github.workspace }}
         run: |
-          pytest tests
+          python -m pytest tests
