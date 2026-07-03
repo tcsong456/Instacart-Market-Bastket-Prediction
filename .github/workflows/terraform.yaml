@@ -1,0 +1,36 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+
+jobs:
+  terraform-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: terraform/dev
+  
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+        with:
+          terraofrm_version: "1.9.x"
+      
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: terraform fmt
+        run: terraform fmt -check -recursive
+      
+      - name: terraform init
+        run: terraform init -backend=false
+
+      - name: terraform validation
+        run: terraform validate

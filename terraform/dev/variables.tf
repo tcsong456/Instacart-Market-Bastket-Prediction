@@ -18,3 +18,7 @@ variable "dataproc_staging_bucket_name" {
 variable "curated_bucket_name" {
   type = string
 }
+
+variable "dataproc_cluster_name" {
+  type = string
+}
