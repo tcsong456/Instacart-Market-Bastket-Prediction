@@ -30,8 +30,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
-      - name: run tests
-        env: 
-          PYTHONPATH: ${{ github.workspace }}
+      - name: run lint
         run: |
-          python -m pytest tests
+          ruff format --check .
+          ruff check .
+
+      - name: run unit-test
+        run: |
+          python -m pytest tests/unit_test
+      
+      - name: run integration-test
+        run: |
+          python -m pytest tests/integration_test

@@ -8,7 +8,4 @@ def fillna_and_cast(
     fillvalue,
     dtype: str,
 ) -> DataFrame:
-    return (
-        df.fillna({column: fillvalue})
-        .withColumn(column, col(column).cast(dtype))
-    )
+    return df.fillna({column: fillvalue}).withColumn(column, col(column).cast(dtype))
