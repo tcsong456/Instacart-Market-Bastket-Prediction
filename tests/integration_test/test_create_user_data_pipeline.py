@@ -5,8 +5,8 @@ from src.common.io import read_parquet
 
 def test_create_user_data_pipeline(spark, tiny_fake_testset_v1):
     build_order_products(spark, tiny_fake_testset_v1, True)
-    tmp_order_products_path = tiny_fake_testset_v1 / 'order_products_sample'
-    tmp_user_data_path = tiny_fake_testset_v1 / 'user_data_sample'
+    tmp_order_products_path = tiny_fake_testset_v1 / 'order_products'
+    tmp_user_data_path = tiny_fake_testset_v1 / 'user_data'
     build_user_data(spark, tmp_order_products_path, tmp_user_data_path)
     user_data = read_parquet(tmp_user_data_path, spark)
 
