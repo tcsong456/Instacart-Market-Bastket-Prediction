@@ -3,8 +3,13 @@ from pyspark.sql.types import StructType
 from pyspark.sql import SparkSession, DataFrame
 
 
-def read_csv(path: str | Path, spark: SparkSession, schema: StructType) -> DataFrame:
-    return spark.read.schema(schema).option("header", True).csv(str(path))
+def read_csv(path: str | Path, spark: SparkSession, schema: StructType | None = None):
+    reader = spark.read.option("header", True)
+    if schema is not None:
+        reader = reader.schema(schema)
+    else:
+        reader = reader.option("inferSchema", True)
+    return reader.csv(str(path))
 
 
 def read_parquet(path: str | Path, spark: SparkSession) -> DataFrame:
