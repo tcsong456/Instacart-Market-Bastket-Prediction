@@ -8,7 +8,7 @@ def read_csv(path: str | Path, spark: SparkSession, schema: StructType | None = 
     if schema is not None:
         reader = reader.schema(schema)
     else:
-        reader = reader.option('inferSchema', True)
+        reader = reader.option("inferSchema", True)
     return reader.csv(str(path))
 
 
@@ -17,9 +17,4 @@ def read_parquet(path: str | Path, spark: SparkSession) -> DataFrame:
 
 
 def write_parquet(path: str | Path, df: DataFrame) -> None:
-    (
-        df
-        .write
-        .mode("overwrite")
-        .parquet(str(path))
-     )
+    (df.write.mode("overwrite").parquet(str(path)))

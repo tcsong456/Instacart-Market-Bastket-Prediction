@@ -21,24 +21,22 @@ SELECTED_COLUMNS = [
     "order_dows",
     "order_hours",
     "days_since_prior_orders",
-    "order_numbers"
+    "order_numbers",
 ]
 
 
 def parse_seq(
-    df: DataFrame,
-    input_col: str,
-    prefix: str,
-    calculate_set: bool = False
+    df: DataFrame, input_col: str, prefix: str, calculate_set: bool = False
 ) -> DataFrame:
     df = (
-        df
-        .withColumn(f'{prefix}_raw', F.split(F.col(input_col), ' '))
-        .withColumn(f'{prefix}_prev', F.expr(f"slice({prefix}_raw, 1, size({prefix}_raw) - 1)"))
+        df.withColumn(f"{prefix}_raw", F.split(F.col(input_col), " "))
         .withColumn(
-                f'{prefix}_all',
-                F.expr(
-                    f"""
+            f"{prefix}_prev", F.expr(f"slice({prefix}_raw, 1, size({prefix}_raw) - 1)")
+        )
+        .withColumn(
+            f"{prefix}_all",
+            F.expr(
+                f"""
                     transform(
                         {prefix}_prev,
                         x -> transform(
@@ -46,71 +44,61 @@ def parse_seq(
                         )
                     )
                     """
-                )
+            ),
         )
-        .withColumn(f'next_{prefix}', F.element_at(f'{prefix}_raw', -1))
+        .withColumn(f"next_{prefix}", F.element_at(f"{prefix}_raw", -1))
         .withColumn(
-                f'next_{prefix}_int',
-                F.expr(
-                    f"""
+            f"next_{prefix}_int",
+            F.expr(
+                f"""
                     transform(
                         split(next_{prefix}, '_'),
                         x -> cast(x as int)
                     )
                 """
-            )
+            ),
         )
     )
 
     if calculate_set:
-        df = (
-            df
-            .withColumn(f'{prefix}_set', F.array_distinct(F.flatten(F.col(f'{prefix}_all'))))
-            .withColumn(f'next_{prefix}_set', F.array_distinct(F.col(f'next_{prefix}_int')))
+        df = df.withColumn(
+            f"{prefix}_set", F.array_distinct(F.flatten(F.col(f"{prefix}_all")))
+        ).withColumn(
+            f"next_{prefix}_set", F.array_distinct(F.col(f"next_{prefix}_int"))
         )
     return df
 
 
-def filtered_orders(
-    path: Path,
-    spark: SparkSession
-):
-    orders_path = gcs_join(path, 'orders.csv')
+def filtered_orders(path: Path, spark: SparkSession):
+    orders_path = gcs_join(path, "orders.csv")
     orders = read_csv(path=orders_path, spark=spark)
-    orders = (
-        orders
-        .filter(F.col('eval_set').isin('train', 'test'))
-        .select(
-            'user_id',
-            F.col('eval_set').alias('target_eval_set')
-        )
+    orders = orders.filter(F.col("eval_set").isin("train", "test")).select(
+        "user_id", F.col("eval_set").alias("target_eval_set")
     )
     return orders
 
 
 def build_each_product_in_order_history(
-    path: Path,
-    df: DataFrame,
-    orders: DataFrame,
-    spark: SparkSession
+    path: Path, df: DataFrame, orders: DataFrame, spark: SparkSession
 ) -> DataFrame:
-    product_path = gcs_join(path, 'products.csv')
+    product_path = gcs_join(path, "products.csv")
     products = read_csv(path=product_path, spark=spark)
 
-    df = df.join(orders, how='left', on='user_id')
+    df = df.join(orders, how="left", on="user_id")
 
     df = (
-        df
-        .withColumn('product_id', F.explode('products_set'))
+        df.withColumn("product_id", F.explode("products_set"))
         .withColumn(
-            'label',
+            "label",
             F.when(
-                F.col('target_eval_set') == 'train',
-                F.array_contains(F.col('next_products_set'), F.col('product_id')).cast('int')
-            ).otherwise(F.lit(-1))    
+                F.col("target_eval_set") == "train",
+                F.array_contains(F.col("next_products_set"), F.col("product_id")).cast(
+                    "int"
+                ),
+            ).otherwise(F.lit(-1)),
         )
         .withColumn(
-            'is_ordered_history',
+            "is_ordered_history",
             F.expr(
                 """
                 array_join(
@@ -120,10 +108,10 @@ def build_each_product_in_order_history(
                     ' '
                 )
                 """
-            )
+            ),
         )
         .withColumn(
-            'position_in_order_history',
+            "position_in_order_history",
             F.expr(
                 """
                 array_join(
@@ -138,20 +126,19 @@ def build_each_product_in_order_history(
                     ' '
                 )
                 """
-            )
+            ),
         )
         .withColumn(
-            'history_order_size',
+            "history_order_size",
             F.expr("""
                    array_join(
                     transform(products_all, x -> size(x)),
                    ' '
                 )
-            """
-            )
+            """),
         )
         .withColumn(
-            'history_reorder_size',
+            "history_reorder_size",
             F.expr(
                 """
                 array_join(
@@ -171,33 +158,30 @@ def build_each_product_in_order_history(
                     ' '
                 )
                 """
-            )
+            ),
         )
     )
 
-    df = df.join(products, how='left', on='product_id')
+    df = df.join(products, how="left", on="product_id")
     return df.select(SELECTED_COLUMNS)
 
 
 def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
-    df = df.join(orders, how='left', on='user_id')
+    df = df.join(orders, how="left", on="user_id")
     df = (
-        df
-        .withColumn('product_id', F.lit(0))
-        .withColumn('aisle_id', F.lit(0))
-        .withColumn('department_id', F.lit(0))
-        .withColumn('product_name', F.lit(""))
+        df.withColumn("product_id", F.lit(0))
+        .withColumn("aisle_id", F.lit(0))
+        .withColumn("department_id", F.lit(0))
+        .withColumn("product_name", F.lit(""))
         .withColumn(
-            'label',
+            "label",
             F.when(
-                F.col('target_eval_set') == 'train',
-                (
-                    F.array_max('next_reorders_int') == 0
-                ).cast('int')
-            ).otherwise(F.lit(-1))
+                F.col("target_eval_set") == "train",
+                (F.array_max("next_reorders_int") == 0).cast("int"),
+            ).otherwise(F.lit(-1)),
         )
         .withColumn(
-            'is_ordered_history',
+            "is_ordered_history",
             F.expr(
                 """
                     array_join(
@@ -208,10 +192,10 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
                         ' '
                     )
                 """
-            )
+            ),
         )
         .withColumn(
-            'position_in_order_history',
+            "position_in_order_history",
             F.expr(
                 """
                     array_join(
@@ -222,10 +206,10 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
                     ' '
                 )
                 """
-            )
+            ),
         )
         .withColumn(
-            'history_order_size',
+            "history_order_size",
             F.expr(
                 """
                     array_join(
@@ -236,10 +220,10 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
                         ' '
                     )
                 """
-            )
+            ),
         )
         .withColumn(
-            'history_reorder_size',
+            "history_reorder_size",
             F.expr(
                 """
                     array_join(
@@ -254,7 +238,7 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
                     ' '
                     )
                 """
-            )
+            ),
         )
     )
     return df.select(SELECTED_COLUMNS)
@@ -262,35 +246,21 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--input-dir',
-        type=Path,
-        required=True
-    )
-    parser.add_argument(
-        '--raw-dir',
-        type=Path,
-        required=True
-    )
-    parser.add_argument(
-        '--output-dir',
-        required=True
-    )
+    parser.add_argument("--input-dir", type=Path, required=True)
+    parser.add_argument("--raw-dir", type=Path, required=True)
+    parser.add_argument("--output-dir", required=True)
     return parser.parse_args()
 
 
 def build_product_history_data():
     args = parse_args()
-    spark = create_spark_session('instacart-product-history')
+    spark = create_spark_session("instacart-product-history")
     orders = filtered_orders(args.raw_dir, spark)
-    df = read_parquet(args.input_dir / 'user_data_sample', spark)
-    products = parse_seq(df, 'product_ids', 'products', True)
-    reorders = parse_seq(df, 'reorders', 'reorders')
+    df = read_parquet(args.input_dir / "user_data_sample", spark)
+    products = parse_seq(df, "product_ids", "products", True)
+    reorders = parse_seq(df, "reorders", "reorders")
     product_history = build_each_product_in_order_history(
-        df=products,
-        path=args.raw_dir,
-        orders=orders,
-        spark=spark
+        df=products, path=args.raw_dir, orders=orders, spark=spark
     )
     reorder_history = build_each_reorder_history(reorders, orders)
     product_include_none_history = product_history.unionByName(reorder_history)
@@ -298,6 +268,5 @@ def build_product_history_data():
     spark.stop()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     build_product_history_data()
-    
