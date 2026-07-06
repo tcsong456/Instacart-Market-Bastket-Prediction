@@ -13,6 +13,21 @@ def parse_args():
 
 
 def build_order_level_data(df: DataFrame) -> DataFrame:
+    """
+    Aggregate item-level records into order-level sequences.
+
+    Groups items by user and order, preserves the add-to-cart order of
+    products, aggregates order metadata, and concatenates product,
+    reorder, department, and aisle values with '_' as
+    sequence features.
+
+    Args:
+        df: Item-level DataFrame containing one row per product in an order.
+    Returns:
+        A DataFrame containing one row per (user_id, order_id) with
+        order metadata and ordered sequence features.
+    """
+
     item_struct = F.struct(
         F.col("add_to_cart_order"),
         F.col("product_id").cast("string").alias("product_id"),
@@ -51,6 +66,19 @@ def build_order_level_data(df: DataFrame) -> DataFrame:
 
 
 def build_user_level_data(df: DataFrame) -> DataFrame:
+    """
+    Aggregate order-level features into user-level purchase histories.
+
+    Groups orders by user, perserved by order number sequence, and concatenates
+    order metadata and product-related sequences into user-level history
+    features.
+
+    Args:
+        df: Order-level DataFrame containing one row per (user_id, order_id).
+    Returns:
+        A DataFrame containing one row per user with chronological order history
+    """
+        
     order_struct = F.struct(
         F.col("order_number").cast("int").alias("order_number_sort"),
         F.col("order_id").cast("string").alias("order_id"),
