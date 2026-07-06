@@ -157,6 +157,29 @@ def tiny_fake_testset_v1(tmp_path):
     return raw_dir
 
 
+@pytest.fixture
+def tiny_fake_testset_v2(spark):
+    return spark.createDataFrame(
+        [
+            (
+                10,
+                "1_2_3 0_10 5_323_1_12 5",
+                "0_0_0 1_1 1_0_1_0 1",
+            ),
+            (
+                20,
+                "11_5 300 12_10_1000_300_33 20_11_75",
+                "0_0 0 0_1_0_1_1 1_1_0",
+            ),
+        ],
+        schema=[
+            "user_id",
+            "product_ids",
+            "reorders",
+        ],
+    )
+
+
 @pytest.fixture(scope="session")
 def spark():
     spark = create_spark_session("unit-test")
