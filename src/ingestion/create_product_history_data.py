@@ -112,7 +112,7 @@ def build_each_product_in_order_history(
     Args:
         df: Parsed user product sequential dataframe
         path: Directory that contains all instacart csv files
-        orders: Dataframe contains order metadata
+        orders: Dataframe contains order dataset filtered by eval_set
         spark: Active Spark session
     Returns:
         Dataframe contains one row per user-product with sequential
@@ -211,7 +211,7 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
         orders: A dataframe with metadata about orders provided by instacart but
                 only include rows with eval_set in ['train', 'test']
     Returns:
-        A dataframe that aggregates its features to constuct the history recorde
+        A dataframe that aggregates its features to construct the history recorde
         for the dummpy 'None' product.
     """
 
