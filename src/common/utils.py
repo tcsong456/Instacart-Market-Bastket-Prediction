@@ -7,9 +7,7 @@ def gcs_join(base_path: str | Path, filename: str) -> str:
 
 
 def assert_spark_df_equal(
-    actual_df: DataFrame,
-    expected_df: DataFrame,
-    order_by_col: list
+    actual_df: DataFrame, expected_df: DataFrame, order_by_col: list
 ) -> None:
     actual_df = actual_df.select(expected_df.columns)
     assert (
