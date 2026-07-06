@@ -133,7 +133,7 @@ def test_build_each_product_in_order_history(spark, tmp_path):
         order_numbers="1 2 3 4",
         history_order_size="3 2 4",
         history_reorder_size="0 0 1",
-        eval_set='train'
+        eval_set="train",
     )
     common_cols_2 = dict(
         user_id=20,
@@ -145,7 +145,7 @@ def test_build_each_product_in_order_history(spark, tmp_path):
         order_numbers="3 4 5 6",
         history_order_size="3 2 5",
         history_reorder_size="0 1 2",
-        eval_set='test'
+        eval_set="test",
     )
     expected_df = spark.createDataFrame(
         [
