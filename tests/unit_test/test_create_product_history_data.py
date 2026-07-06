@@ -10,7 +10,7 @@ def test_parse_seq_with_set(tiny_fake_testset_v2):
     row = df.filter("user_id==10").first()
     assert row["products_raw"] == ["1_2_3", "0_10", "5_323_1_12", "5"]
     assert row["products_prev"] == ["1_2_3", "0_10", "5_323_1_12"]
-    assert row["products_all"] == [[1, 2, 3], [0, 10], [500, 323, 1, 12]]
+    assert row["products_all"] == [[1, 2, 3], [0, 10], [5, 323, 1, 12]]
     assert row["next_products"] == "5"
     assert row["next_products_int"] == [5]
     assert sorted(row["products_set"]) == [0, 1, 2, 3, 5, 10, 12, 323]
