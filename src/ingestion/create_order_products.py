@@ -132,6 +132,17 @@ def validate_join_counts(joined_df: DataFrame, order_products: DataFrame) -> Non
 
 
 def build_order_products(spark: SparkSession, path: str, debug: bool = False) -> None:
+    """
+    Args:
+        spark: Active Spark session
+        path: The directory to download raw instacart datasets
+        debug: Whether to display metadata about the contructed datasets
+    Returns:
+        A dataframe that contains full information for per user-order including
+        features such as all products inside each order well their purchase order,
+        day and hour of purchase, etc
+    """
+
     logging.basicConfig(level=logging.INFO)
 
     orders, products, order_prior, order_train = load_csv_data(

@@ -41,6 +41,17 @@ def filter_orders_by_users(
 def write_filtered_order_products(
     raw_dir: Path, sample_dir: Path, chunksize: int, filename: str, order_ids: set[int]
 ) -> None:
+    """
+    Args:
+        raw_dir: Directory that contains raw instacart datasets
+        sample_dir: The output directory to store the output file
+        chunk_size: The number of chunks to read data in memory
+        filename: The name of the output file
+        order_ids: The wanted set of order ids
+    Returns:
+        Write sampled order_product datasets to output directory
+    """
+
     first_chunk = True
     wrote_any_rows = False
     output_dir = sample_dir / filename
@@ -79,6 +90,23 @@ def parse_args() -> argparse.Namespace:
 def main(
     raw_dir: Path, sample_dir: Path, chunk_size: int, seed: int, sample_n: int
 ) -> None:
+    """
+    Create sampled datasets for local development and tests. Select a subset
+    of users and all its corresponding orders as well as order products, copy
+    'look_up_files' to produce a self-contained sample dataset folder
+
+    Args:
+        raw_dir: Directory containing the original Instacart CSV files.
+        sample_dir: Output directory for the sampled dataset.
+        chunk_size: Number of rows to process per chunk when filtering
+            large order product files.
+        seed: Random seed used for reproducible user sampling.
+        sample_n: Number of users to sample.
+
+    Returns:
+        None.
+    """
+
     validate_inputs(raw_dir, sample_n)
     sample_dir.mkdir(parents=True, exist_ok=True)
 

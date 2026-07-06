@@ -28,6 +28,19 @@ SELECTED_COLUMNS = [
 def parse_seq(
     df: DataFrame, input_col: str, prefix: str, calculate_set: bool = False
 ) -> DataFrame:
+    """
+    Args:"
+        df: A user dataframe with historical sequential features from each of
+            its past order concated with '_' as delimiter
+        input_col: The name of the column to build features upon
+        prefix: The prefix for the name of generated columns
+        calculate_set: Whether to get all the unique products for both the past
+        and next order
+    Returns:
+        A dataframe with its sequential features parsed for downstream data
+        processing jobs
+    """
+
     df = (
         df.withColumn(f"{prefix}_raw", F.split(F.col(input_col), " "))
         .withColumn(
@@ -69,7 +82,17 @@ def parse_seq(
     return df
 
 
-def filtered_orders(path: Path, spark: SparkSession):
+def filtered_orders(path: Path, spark: SparkSession) -> DataFrame:
+    """
+     Args:
+        path: Directory that contains all instacart data
+        spark: Active Spark session
+
+    returns:
+        A orders dataframe with eval_set in each raw equals to
+        either 'train' or test
+    """
+
     orders_path = gcs_join(path, "orders.csv")
     orders = read_csv(path=orders_path, spark=spark)
     orders = orders.filter(F.col("eval_set").isin("train", "test")).select(
@@ -81,6 +104,23 @@ def filtered_orders(path: Path, spark: SparkSession):
 def build_each_product_in_order_history(
     path: Path, df: DataFrame, orders: DataFrame, spark: SparkSession
 ) -> DataFrame:
+    """
+    Generate per-product history features for each user
+
+    Collapse each user's purchase history into one row per user-product and
+    and construct sequential product history features.
+
+    Args:
+        df: Parsed user product sequential dataframe
+        path: Directory that contains all instacart csv files
+        orders: Dataframe contains order metadata
+        spark: Active Spark session
+
+    Returns:
+        Dataframe contains one row per user-product with sequential
+        order history features
+    """
+
     product_path = gcs_join(path, "products.csv")
     products = read_csv(path=product_path, spark=spark)
 
@@ -167,6 +207,16 @@ def build_each_product_in_order_history(
 
 
 def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
+    """
+    Args:
+        df: A dataframe with parsed sequential features
+        orders: A dataframe with metadata about orders provided by instacart but
+                only include rows with eval_set in ['train', 'test']
+    Returns:
+        A dataframe that aggregates its features to constuct the history recorde
+        for the dummpy 'None' product.
+    """
+
     df = df.join(orders, how="left", on="user_id")
     df = (
         df.withColumn("product_id", F.lit(0))
@@ -252,7 +302,15 @@ def parse_args():
     return parser.parse_args()
 
 
-def build_product_history_data():
+def build_product_history_data() -> None:
+    """
+    Args:
+        None
+    Returns:
+        A dataframe that contains aggregated historical features for
+        each  user-product pair ready downstream model training
+    """
+
     args = parse_args()
     spark = create_spark_session("instacart-product-history")
     orders = filtered_orders(args.raw_dir, spark)
