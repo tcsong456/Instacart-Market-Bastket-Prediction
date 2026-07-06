@@ -1,4 +1,5 @@
-from src.ingestion.create_product_history_data import parse_seq
+import pandas as pd
+from src.ingestion.create_product_history_data import parse_seq, filtered_orders
 
 
 def test_parse_seq_with_set(tiny_fake_testset_v2):
@@ -29,3 +30,26 @@ def test_parse_seq_without_set(tiny_fake_testset_v2):
     assert row["next_reorders_int"] == [1, 1, 0]
     assert "reorders_set" not in df.columns
     assert "next_reorders_set" not in df.columns
+
+
+def test_filtered_orders(spark, tmp_path):
+    df = pd.DataFrame(
+        [
+            (10, 1, "train", 3, 23),
+            (20, 2, "prior", 0, 11),
+            (30, 3, "test", 1, 7),
+            (40, 4, "prior", 5, 1),
+        ],
+        columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
+    )
+    order_path = tmp_path / "orders.csv"
+    df.to_csv(order_path, index=False)
+
+    df = filtered_orders(tmp_path, spark)
+
+    assert df.count() == 2
+    assert set(df.columns) == {"user_id", "target_eval_set"}
+
+    rows = {row["user_id"]: row["target_eval_set"] for row in df.collect()}
+
+    assert rows == {10: "train", 30: "test"}
