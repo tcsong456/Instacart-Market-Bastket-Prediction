@@ -87,7 +87,6 @@ def filtered_orders(path: Path, spark: SparkSession) -> DataFrame:
      Args:
         path: Directory that contains all instacart data
         spark: Active Spark session
-
     returns:
         A orders dataframe with eval_set in each raw equals to
         either 'train' or test
@@ -115,7 +114,6 @@ def build_each_product_in_order_history(
         path: Directory that contains all instacart csv files
         orders: Dataframe contains order metadata
         spark: Active Spark session
-
     Returns:
         Dataframe contains one row per user-product with sequential
         order history features
