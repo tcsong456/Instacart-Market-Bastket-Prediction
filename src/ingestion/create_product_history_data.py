@@ -30,7 +30,7 @@ def parse_seq(
 ) -> DataFrame:
     """
     Args:"
-        df: A user dataframe with historical sequential features from each of 
+        df: A user dataframe with historical sequential features from each of
             its past order concated with '_' as delimiter
         input_col: The name of the column to build features upon
         prefix: The prefix for the name of generated columns
@@ -87,7 +87,7 @@ def filtered_orders(path: Path, spark: SparkSession) -> DataFrame:
      Args:
         path: Directory that contains all instacart data
         spark: Active Spark session
-    
+
     returns:
         A orders dataframe with eval_set in each raw equals to
         either 'train' or test
@@ -115,7 +115,7 @@ def build_each_product_in_order_history(
         path: Directory that contains all instacart csv files
         orders: Dataframe contains order metadata
         spark: Active Spark session
-    
+
     Returns:
         Dataframe contains one row per user-product with sequential
         order history features

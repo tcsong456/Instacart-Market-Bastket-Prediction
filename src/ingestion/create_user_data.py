@@ -78,7 +78,7 @@ def build_user_level_data(df: DataFrame) -> DataFrame:
     Returns:
         A DataFrame containing one row per user with chronological order history
     """
-        
+
     order_struct = F.struct(
         F.col("order_number").cast("int").alias("order_number_sort"),
         F.col("order_id").cast("string").alias("order_id"),
