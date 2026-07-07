@@ -275,8 +275,8 @@ def fake_parse_seq_data(spark):
         [
             {
                 "user_id": 10,
-                "products_set": [0, 1, 2, 3, 5, 10, 12, 323],
-                "products_all": [[1, 2, 3], [0, 10], [5, 323, 1, 12]],
+                "products_set": [1, 2, 3, 4, 5, 10, 12, 323],
+                "products_all": [[1, 2, 3], [4, 10], [5, 323, 1, 12]],
                 "reorders_all": [[0, 0, 0], [0, 0], [0, 0, 1, 0]],
                 "next_products_set": [5],
                 "next_reorders_int": [1],
