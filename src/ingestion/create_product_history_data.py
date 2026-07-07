@@ -279,7 +279,7 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
                             reorders_all,
                             x -> cast(
                                 aggregate(
-                                    x, 0, (acc, v) -> acc + v
+                                    x, cast(0 as bigint), (acc, v) -> acc + v
                                 ) as string
                             )
                         ),

@@ -292,6 +292,13 @@ def test_build_each_product_in_order_history(
         schema=expected_schema,
     )
     expected_df = expected_df.select(SELECTED_COLUMNS)
+    print(len(actual_df.schema.fields))
+    print(len(expected_df.schema.fields))
+    for actual, expected in zip(actual_df.schema.fields, expected_df.schema.fields):
+        if actual != expected:
+            print(f"Column: {actual.name}")
+            print(f"  Actual  : {actual}")
+            print(f"  Expected: {expected}")
 
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
 
