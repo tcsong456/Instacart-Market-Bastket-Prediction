@@ -366,9 +366,19 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
     )
     expected_reorders = expected_reorders.select(SELECTED_COLUMNS)
 
-    for actual, expected in zip(
-        actual_reorders.schema.fields, expected_reorders.schema.fields
-    ):
-        if actual != expected:
-            print(f"{actual.name}: actual={actual}, expected={expected}")
+    actual_rows = actual_reorders.orderBy("user_id").collect()
+    expected_rows = expected_reorders.orderBy("user_id").collect()
+
+    for a, e in zip(actual_rows, expected_rows):
+        print(f"\n=== user_id={a['user_id']} ===")
+        for col in SELECTED_COLUMNS:
+            av, ev = a[col], e[col]
+            if av != e:
+                print(
+                    f"  MISMATCH {col}: actual={av!r} ({type(av).__name__}) expected={ev!r} ({type(ev).__name__})"
+                )
+
+    print("actual labels:", actual_reorders.select("user_id", "label").collect())
+    print("expected labels:", expected_reorders.select("user_id", "label").collect())
+
     assert_spark_df_equal(actual_reorders, expected_reorders, ["user_id"])
