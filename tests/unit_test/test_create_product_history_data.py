@@ -127,8 +127,6 @@ def test_build_each_product_in_order_history(spark, tmp_path):
 
     common_cols_1 = dict(
         user_id=10,
-        products_all=[[1, 2, 3], [0, 10], [5, 323, 1, 12]],
-        next_products_set=[5],
         order_dows="5 0 5 1",
         order_hours="23 1 17 16",
         days_since_prior_orders="-1 30 60 25",
@@ -139,8 +137,6 @@ def test_build_each_product_in_order_history(spark, tmp_path):
     )
     common_cols_2 = dict(
         user_id=20,
-        products_all=[[11, 5, 23], [300, 23], [12, 20, 1000, 300, 11]],
-        next_products_set=[20, 11, 1000],
         order_dows="1 2 3 4",
         order_hours="8 13 8 0",
         days_since_prior_orders="10 19 22 6",
