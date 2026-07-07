@@ -1,6 +1,6 @@
 import pandas as pd
 from pyspark.sql import Row
-from src.common.io import read_csv
+from src.common.io import read_csv, read_parquet
 from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
 from src.common.utils import assert_spark_df_equal
 from src.ingestion.create_product_history_data import (
@@ -12,8 +12,8 @@ from src.ingestion.create_product_history_data import (
 )
 
 
-def test_parse_seq_with_set(fake_user_data):
-    df = fake_user_data
+def test_parse_seq_with_set(spark, fake_user_data):
+    df = read_parquet(fake_user_data, spark)
     df = parse_seq(
         df=df, input_col="product_ids", prefix="products", calculate_set=True
     )
@@ -28,8 +28,8 @@ def test_parse_seq_with_set(fake_user_data):
     assert sorted(row["next_products_set"]) == [5]
 
 
-def test_parse_seq_without_set(fake_user_data):
-    df = fake_user_data
+def test_parse_seq_without_set(spark, fake_user_data):
+    df = read_parquet(fake_user_data, spark)
     df = parse_seq(df=df, input_col="reorders", prefix="reorders", calculate_set=False)
 
     row = df.filter("user_id==20").first()
