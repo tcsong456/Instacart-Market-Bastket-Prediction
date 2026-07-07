@@ -1,5 +1,6 @@
 import pandas as pd
 from pyspark.sql import Row
+from src.common.io import read_csv
 from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
 from src.common.utils import assert_spark_df_equal
 from src.ingestion.create_product_history_data import (
@@ -65,36 +66,13 @@ def test_filtered_orders(spark, tmp_path):
 
 
 def test_build_each_product_in_order_history(
-    spark, tmp_path, fake_parse_seq_data, fake_filtered_orders
+    spark, fake_parse_seq_data, fake_filtered_orders, fake_products_data
 ):
     df = fake_parse_seq_data
-    orders = fake_filtered_orders
-
-    products = pd.DataFrame(
-        [
-            (0, "a", 5, 30),
-            (1, "b", 5, 10),
-            (2, "c", 10, 10),
-            (3, "d", 15, 30),
-            (4, "e", 10, 20),
-            (5, "f", 5, 10),
-            (10, "g", 20, 40),
-            (11, "h", 5, 30),
-            (12, "i", 15, 20),
-            (15, "j", 30, 20),
-            (20, "l", 20, 30),
-            (1000, "m", 20, 40),
-            (323, "n", 10, 20),
-            (300, "o", 15, 40),
-            (23, "z", 25, 50),
-        ],
-        columns=["product_id", "product_name", "aisle_id", "department_id"],
-    )
-    product_path = tmp_path / "products.csv"
-    products.to_csv(product_path)
+    orders = read_csv(fake_filtered_orders / "orders.csv", spark)
 
     actual_df = build_each_product_in_order_history(
-        path=tmp_path, df=df, orders=orders, spark=spark
+        path=fake_products_data, df=df, orders=orders, spark=spark
     )
 
     common_cols_1 = dict(
@@ -299,7 +277,8 @@ def test_build_each_product_in_order_history(
 def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_orders):
     df = fake_parse_seq_data
 
-    actual_reorders = build_each_reorder_history(df, fake_filtered_orders)
+    orders = read_csv(fake_filtered_orders, spark)
+    actual_reorders = build_each_reorder_history(df, orders)
 
     common_cols_1 = dict(
         user_id=10,

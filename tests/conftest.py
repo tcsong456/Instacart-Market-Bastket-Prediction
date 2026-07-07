@@ -2,6 +2,7 @@ import sys
 import pytest
 import pandas as pd
 from pathlib import Path
+from src.common.io import write_parquet
 from src.common.spark import create_spark_session
 
 
@@ -158,18 +159,57 @@ def tiny_fake_testset_v1(tmp_path):
 
 
 @pytest.fixture
-def fake_filtered_orders(spark):
-    return spark.createDataFrame(
+def fake_filtered_orders(spark, tmp_path):
+    orders = spark.createDataFrame(
         [
             {"user_id": 10, "target_eval_set": "train"},
             {"user_id": 20, "target_eval_set": "test"},
         ]
     )
 
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    order_path = raw_dir / "orders.csv"
+    orders.toPandas().to_csv(order_path, index=False)
+    return raw_dir
+
 
 @pytest.fixture
-def fake_user_data(spark):
-    return spark.createDataFrame(
+def fake_products_data(tmp_path):
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir(parents=True, exist_ok=True)
+
+    products = pd.DataFrame(
+        [
+            (0, "a", 5, 30),
+            (1, "b", 5, 10),
+            (2, "c", 10, 10),
+            (3, "d", 15, 30),
+            (4, "e", 10, 20),
+            (5, "f", 5, 10),
+            (10, "g", 20, 40),
+            (11, "h", 5, 30),
+            (12, "i", 15, 20),
+            (15, "j", 30, 20),
+            (20, "l", 20, 30),
+            (1000, "m", 20, 40),
+            (323, "n", 10, 20),
+            (300, "o", 15, 40),
+            (23, "z", 25, 50),
+        ],
+        columns=["product_id", "product_name", "aisle_id", "department_id"],
+    )
+    product_path = raw_dir / "products.csv"
+    products.to_csv(product_path, index=False)
+    return raw_dir
+
+
+@pytest.fixture
+def fake_user_data(spark, tmp_path):
+    curated_dir = tmp_path / "curated"
+    curated_dir.mkdir(parents=True, exist_ok=True)
+
+    user_data = spark.createDataFrame(
         [
             (
                 10,
@@ -203,6 +243,9 @@ def fake_user_data(spark):
             "order_numbers",
         ],
     )
+
+    write_parquet(curated_dir, user_data)
+    return curated_dir
 
 
 @pytest.fixture

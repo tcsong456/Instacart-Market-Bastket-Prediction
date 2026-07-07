@@ -300,7 +300,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def build_product_history_data() -> None:
+def build_product_history_data(
+    spark: SparkSession, input_dir: Path, raw_dir: Path, output_dir: Path
+) -> None:
     """
     Args:
         None
@@ -309,20 +311,25 @@ def build_product_history_data() -> None:
         each  user-product pair ready downstream model training
     """
 
-    args = parse_args()
-    spark = create_spark_session("instacart-product-history")
-    orders = filtered_orders(args.raw_dir, spark)
-    df = read_parquet(args.input_dir / "user_data_sample", spark)
+    orders = filtered_orders(raw_dir, spark)
+    df = read_parquet(input_dir / "user_data", spark)
     products = parse_seq(df, "product_ids", "products", True)
     reorders = parse_seq(df, "reorders", "reorders")
     product_history = build_each_product_in_order_history(
-        df=products, path=args.raw_dir, orders=orders, spark=spark
+        df=products, path=raw_dir, orders=orders, spark=spark
     )
     reorder_history = build_each_reorder_history(reorders, orders)
     product_include_none_history = product_history.unionByName(reorder_history)
-    write_parquet(args.output_dir, product_include_none_history)
+    write_parquet(output_dir, product_include_none_history)
     spark.stop()
 
 
 if __name__ == "__main__":
-    build_product_history_data()
+    args = parse_args()
+    spark = create_spark_session("instacart-product-history")
+    build_product_history_data(
+        spark=spark,
+        input_dir=args.input_dir,
+        raw_dir=args.raw_dir,
+        output_dir=args.output_dir,
+    )
