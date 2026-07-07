@@ -2,7 +2,6 @@ from src.common.io import read_parquet
 from src.ingestion.create_product_history_data import build_product_history_data
 
 
-# z=111
 def test_build_product_history_data_pipeline(
     spark,
     fake_user_data,

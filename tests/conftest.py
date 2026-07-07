@@ -177,7 +177,7 @@ def fake_filtered_orders(spark, raw_dir):
 
 
 @pytest.fixture
-def fake_ordes(raw_dir):
+def fake_orders(raw_dir):
     orders = pd.DataFrame(
         [
             (10, 1, "train", 3, 23),
