@@ -2,6 +2,7 @@ from pyspark.sql import Row
 from src.common.utils import assert_spark_df_equal
 from src.common.io import read_parquet
 from src.ingestion.create_product_history_data import build_product_history_data
+from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
 
 
 def test_build_product_history_data_pipeline(
@@ -40,6 +41,25 @@ def test_build_product_history_data_pipeline(
         order_numbers="3 4 5 6",
         history_order_size="2 1 5",
         history_reorder_size="0 0 2",
+    )
+    expected_schema = StructType(
+        [
+            StructField("product_id", IntegerType(), True),
+            StructField("label", IntegerType(), True),
+            StructField("is_ordered_history", StringType(), True),
+            StructField("position_in_order_history", StringType(), True),
+            StructField("product_name", StringType(), True),
+            StructField("aisle_id", IntegerType(), True),
+            StructField("department_id", IntegerType(), True),
+            StructField("user_id", LongType(), True),
+            StructField("eval_set", StringType(), True),
+            StructField("order_dows", StringType(), True),
+            StructField("order_hours", StringType(), True),
+            StructField("days_since_prior_orders", StringType(), True),
+            StructField("order_numbers", StringType(), True),
+            StructField("history_order_size", StringType(), True),
+            StructField("history_reorder_size", StringType(), True),
+        ]
     )
     expected_df = spark.createDataFrame(
         [
@@ -217,9 +237,8 @@ def test_build_product_history_data_pipeline(
                 department_id=40,
                 **common_cols_2,
             ),
-        ]
+        ],
+        schema=expected_schema,
     )
-
-    actual_df.printSchema()
 
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
