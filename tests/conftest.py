@@ -18,13 +18,6 @@ def raw_dir(tmp_path):
 
 
 @pytest.fixture
-def fake_dir(tmp_path):
-    fake_dir = tmp_path / "fake"
-    fake_dir.mkdir(parents=True, exist_ok=True)
-    return fake_dir
-
-
-@pytest.fixture
 def tiny_fake_testset(raw_dir):
     orders = pd.DataFrame(
         {

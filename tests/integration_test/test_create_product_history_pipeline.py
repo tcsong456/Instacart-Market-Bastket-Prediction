@@ -1,3 +1,5 @@
+from pyspark.sql import Row
+from src.common.utils import assert_spark_df_equal
 from src.common.io import read_parquet
 from src.ingestion.create_product_history_data import build_product_history_data
 
@@ -17,8 +19,207 @@ def test_build_product_history_data_pipeline(
         spark=spark,
     )
 
-    result = read_parquet(output_dir, spark)
-    result.show(truncate=False)
+    actual_df = read_parquet(output_dir, spark)
 
-    x = 10
-    assert x == 5
+    common_cols_1 = dict(
+        user_id=10,
+        eval_set="train",
+        order_dows="5 0 5 1",
+        order_hours="23 1 17 16",
+        days_since_prior_orders="-1 30 60 25",
+        order_numbers="1 2 3 4",
+        history_order_size="3 2 4",
+        history_reorder_size="0 0 1",
+    )
+    common_cols_2 = dict(
+        user_id=20,
+        eval_set="test",
+        order_dows="1 2 3 4",
+        order_hours="8 13 8 0",
+        days_since_prior_orders="10 19 22 6",
+        order_numbers="3 4 5 6",
+        history_order_size="2 1 5",
+        history_reorder_size="0 0 2",
+    )
+    expected_df = spark.createDataFrame(
+        [
+            Row(
+                product_id=0,
+                label=0,
+                is_ordered_history="1 0 0",
+                position_in_order_history="0 0 0",
+                product_name="",
+                aisle_id=0,
+                department_id=0,
+                user_id=10,
+                eval_set="train",
+                order_dows="5 0 5 1",
+                order_hours="23 1 17 16",
+                days_since_prior_orders="-1 30 60 25",
+                order_numbers="1 2 3 4",
+                history_order_size="3 2 4",
+                history_reorder_size="0 2 2",
+            ),
+            Row(
+                product_id=1,
+                label=0,
+                is_ordered_history="1 0 1",
+                position_in_order_history="1 0 3",
+                product_name="b",
+                aisle_id=5,
+                department_id=10,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=2,
+                label=0,
+                is_ordered_history="1 0 0",
+                position_in_order_history="2 0 0",
+                product_name="c",
+                aisle_id=10,
+                department_id=10,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=3,
+                label=0,
+                is_ordered_history="1 0 0",
+                position_in_order_history="3 0 0",
+                product_name="d",
+                aisle_id=15,
+                department_id=30,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=4,
+                label=0,
+                is_ordered_history="0 1 0",
+                position_in_order_history="0 1 0",
+                product_name="e",
+                aisle_id=10,
+                department_id=20,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=5,
+                label=1,
+                is_ordered_history="0 0 1",
+                position_in_order_history="0 0 1",
+                product_name="f",
+                aisle_id=5,
+                department_id=10,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=10,
+                label=0,
+                is_ordered_history="0 1 0",
+                position_in_order_history="0 2 0",
+                product_name="g",
+                aisle_id=20,
+                department_id=40,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=12,
+                label=0,
+                is_ordered_history="0 0 1",
+                position_in_order_history="0 0 4",
+                product_name="i",
+                aisle_id=15,
+                department_id=20,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=323,
+                label=0,
+                is_ordered_history="0 0 1",
+                position_in_order_history="0 0 2",
+                product_name="n",
+                aisle_id=10,
+                department_id=20,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=0,
+                label=-1,
+                is_ordered_history="1 1 0",
+                position_in_order_history="0 0 0",
+                product_name="",
+                aisle_id=0,
+                department_id=0,
+                user_id=20,
+                eval_set="test",
+                order_dows="1 2 3 4",
+                order_hours="8 13 8 0",
+                days_since_prior_orders="10 19 22 6",
+                order_numbers="3 4 5 6",
+                history_order_size="2 1 5",
+                history_reorder_size="0 0 3",
+            ),
+            Row(
+                product_id=5,
+                label=-1,
+                is_ordered_history="1 0 0",
+                position_in_order_history="2 0 0",
+                product_name="f",
+                aisle_id=5,
+                department_id=10,
+                **common_cols_2,
+            ),
+            Row(
+                product_id=11,
+                label=-1,
+                is_ordered_history="1 0 1",
+                position_in_order_history="1 0 5",
+                product_name="h",
+                aisle_id=5,
+                department_id=30,
+                **common_cols_2,
+            ),
+            Row(
+                product_id=12,
+                label=-1,
+                is_ordered_history="0 0 1",
+                position_in_order_history="0 0 1",
+                product_name="i",
+                aisle_id=15,
+                department_id=20,
+                **common_cols_2,
+            ),
+            Row(
+                product_id=20,
+                label=-1,
+                is_ordered_history="0 0 1",
+                position_in_order_history="0 0 2",
+                product_name="l",
+                aisle_id=20,
+                department_id=30,
+                **common_cols_2,
+            ),
+            Row(
+                product_id=300,
+                label=-1,
+                is_ordered_history="0 1 1",
+                position_in_order_history="0 1 4",
+                product_name="o",
+                aisle_id=15,
+                department_id=40,
+                **common_cols_2,
+            ),
+            Row(
+                product_id=1000,
+                label=-1,
+                is_ordered_history="0 0 1",
+                position_in_order_history="0 0 3",
+                product_name="m",
+                aisle_id=20,
+                department_id=40,
+                **common_cols_2,
+            ),
+        ]
+    )
+
+    actual_df.printSchema()
+
+    assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
