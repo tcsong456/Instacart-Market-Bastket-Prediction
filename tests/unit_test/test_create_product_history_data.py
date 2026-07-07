@@ -105,16 +105,6 @@ def test_build_each_product_in_order_history(
     expected_df = spark.createDataFrame(
         [
             Row(
-                product_id=0,
-                label=0,
-                is_ordered_history="0 1 0",
-                position_in_order_history="0 1 0",
-                product_name="a",
-                aisle_id=5,
-                department_id=30,
-                **common_cols_1,
-            ),
-            Row(
                 product_id=1,
                 label=0,
                 is_ordered_history="1 0 1",
@@ -142,6 +132,16 @@ def test_build_each_product_in_order_history(
                 product_name="d",
                 aisle_id=15,
                 department_id=30,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=4,
+                label=0,
+                is_ordered_history="0 1 0",
+                position_in_order_history="0 1 0",
+                product_name="e",
+                aisle_id=10,
+                department_id=20,
                 **common_cols_1,
             ),
             Row(

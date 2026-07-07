@@ -203,7 +203,6 @@ def fake_orders(fake_dir):
 def fake_products_data(fake_dir):
     products = pd.DataFrame(
         [
-            (0, "a", 5, 30),
             (1, "b", 5, 10),
             (2, "c", 10, 10),
             (3, "d", 15, 30),
@@ -235,7 +234,7 @@ def fake_user_data(spark, tmp_path):
         [
             (
                 10,
-                "1_2_3 0_10 5_323_1_12 5",
+                "1_2_3 4_10 5_323_1_12 5",
                 "0_0_0 1_1 1_0_1_0 1",
                 "train",
                 "5 0 5 1",
