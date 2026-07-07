@@ -1,5 +1,6 @@
 import pandas as pd
 from pyspark.sql import Row
+from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
 from src.common.utils import assert_spark_df_equal
 from src.ingestion.create_product_history_data import (
     parse_seq,
@@ -147,6 +148,25 @@ def test_build_each_product_in_order_history(spark, tmp_path):
         history_reorder_size="0 1 2",
         eval_set="test",
     )
+    expected_schema = StructType(
+        [
+            StructField("user_id", LongType(), True),
+            StructField("product_id", LongType(), True),
+            StructField("label", IntegerType(), True),
+            StructField("aisle_id", IntegerType(), True),
+            StructField("department_id", IntegerType(), True),
+            StructField("product_name", StringType(), True),
+            StructField("eval_set", StringType(), True),
+            StructField("is_ordered_history", StringType(), True),
+            StructField("position_in_order_history", StringType(), True),
+            StructField("history_order_size", StringType(), True),
+            StructField("history_reorder_size", StringType(), True),
+            StructField("order_dows", StringType(), True),
+            StructField("order_hours", StringType(), True),
+            StructField("days_since_prior_orders", StringType(), True),
+            StructField("order_numbers", StringType(), True),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(
@@ -254,7 +274,8 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 position_in_order_history="0 0 3",
                 **common_cols_2,
             ),
-        ]
+        ],
+        schema=expected_schema,
     )
     products_spark = spark.createDataFrame(products)
     expected_df = expected_df.join(products_spark, how="left", on="product_id")
