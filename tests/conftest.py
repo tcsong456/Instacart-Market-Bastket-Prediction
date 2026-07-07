@@ -18,6 +18,13 @@ def raw_dir(tmp_path):
 
 
 @pytest.fixture
+def fake_dir(tmp_path):
+    fake_dir = tmp_path / "fake"
+    fake_dir.mkdir(parents=True, exist_ok=True)
+    return fake_dir
+
+
+@pytest.fixture
 def tiny_fake_testset(raw_dir):
     orders = pd.DataFrame(
         {
@@ -177,7 +184,7 @@ def fake_filtered_orders(spark, raw_dir):
 
 
 @pytest.fixture
-def fake_orders(raw_dir):
+def fake_orders(fake_dir):
     orders = pd.DataFrame(
         [
             (10, 1, "train", 3, 23),
@@ -187,13 +194,13 @@ def fake_orders(raw_dir):
         ],
         columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
     )
-    order_path = raw_dir / "orders.csv"
+    order_path = fake_dir / "orders.csv"
     orders.to_csv(order_path, index=False)
-    return raw_dir
+    return fake_dir
 
 
 @pytest.fixture
-def fake_products_data(raw_dir):
+def fake_products_data(fake_dir):
     products = pd.DataFrame(
         [
             (0, "a", 5, 30),
@@ -214,9 +221,9 @@ def fake_products_data(raw_dir):
         ],
         columns=["product_id", "product_name", "aisle_id", "department_id"],
     )
-    product_path = raw_dir / "products.csv"
+    product_path = fake_dir / "products.csv"
     products.to_csv(product_path, index=False)
-    return raw_dir
+    return fake_dir
 
 
 @pytest.fixture
