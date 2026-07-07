@@ -164,15 +164,31 @@ def tiny_fake_testset_v1(tmp_path):
 
 @pytest.fixture
 def fake_filtered_orders(spark, raw_dir):
-    orders = spark.createDataFrame(
+    filtered_orders = spark.createDataFrame(
         [
             {"user_id": 10, "target_eval_set": "train"},
             {"user_id": 20, "target_eval_set": "test"},
         ]
     )
 
+    order_path = raw_dir / "filtered_orders.csv"
+    filtered_orders.toPandas().to_csv(order_path, index=False)
+    return raw_dir
+
+
+@pytest.fixture
+def fake_ordes(raw_dir):
+    orders = pd.DataFrame(
+        [
+            (10, 1, "train", 3, 23),
+            (20, 2, "test", 0, 11),
+            (30, 3, "prior", 1, 7),
+            (40, 4, "prior", 5, 1),
+        ],
+        columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
+    )
     order_path = raw_dir / "orders.csv"
-    orders.toPandas().to_csv(order_path, index=False)
+    orders.to_csv(order_path, index=False)
     return raw_dir
 
 

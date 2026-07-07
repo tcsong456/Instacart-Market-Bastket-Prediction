@@ -3,7 +3,13 @@ from src.ingestion.create_product_history_data import build_product_history_data
 
 
 def test_build_product_history_data_pipeline(
-    spark, fake_user_data, fake_filtered_orders, fake_products_data, raw_dir, tmp_path
+    spark,
+    fake_user_data,
+    fake_filtered_orders,
+    fake_products_data,
+    fake_orders,
+    raw_dir,
+    tmp_path,
 ):
     output_dir = tmp_path / "product_data"
     build_product_history_data(

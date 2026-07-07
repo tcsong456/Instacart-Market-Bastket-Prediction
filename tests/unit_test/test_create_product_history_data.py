@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 from pyspark.sql import Row
 from src.common.io import read_csv, read_parquet
 from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
@@ -42,34 +42,22 @@ def test_parse_seq_without_set(spark, fake_user_data):
     assert "next_reorders_set" not in df.columns
 
 
-def test_filtered_orders(spark, tmp_path):
-    df = pd.DataFrame(
-        [
-            (10, 1, "train", 3, 23),
-            (20, 2, "prior", 0, 11),
-            (30, 3, "test", 1, 7),
-            (40, 4, "prior", 5, 1),
-        ],
-        columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
-    )
-    order_path = tmp_path / "orders.csv"
-    df.to_csv(order_path, index=False)
-
-    df = filtered_orders(tmp_path, spark)
+def test_filtered_orders(spark, fake_orders, raw_dir):
+    df = filtered_orders(raw_dir, spark)
 
     assert df.count() == 2
     assert set(df.columns) == {"user_id", "target_eval_set"}
 
     rows = {row["user_id"]: row["target_eval_set"] for row in df.collect()}
 
-    assert rows == {10: "train", 30: "test"}
+    assert rows == {10: "train", 20: "test"}
 
 
 def test_build_each_product_in_order_history(
     spark, fake_parse_seq_data, fake_filtered_orders, fake_products_data
 ):
     df = fake_parse_seq_data
-    orders = read_csv(fake_filtered_orders / "orders.csv", spark)
+    orders = read_csv(fake_filtered_orders / "filtered_orders.csv", spark)
 
     actual_df = build_each_product_in_order_history(
         path=fake_products_data, df=df, orders=orders, spark=spark
@@ -277,7 +265,7 @@ def test_build_each_product_in_order_history(
 def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_orders):
     df = fake_parse_seq_data
 
-    orders = read_csv(fake_filtered_orders, spark)
+    orders = read_csv(fake_filtered_orders / "filtered_orders.csv", spark)
     actual_reorders = build_each_reorder_history(df, orders)
 
     common_cols_1 = dict(
