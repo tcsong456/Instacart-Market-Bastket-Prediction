@@ -195,6 +195,39 @@ def fake_user_data(spark):
     )
 
 
+@pytest.fixture
+def fake_parse_seq_data(spark):
+    df = spark.createDataFrame(
+        [
+            {
+                "user_id": 10,
+                "products_set": [0, 1, 2, 3, 5, 10, 12, 323],
+                "products_all": [[1, 2, 3], [0, 10], [5, 323, 1, 12]],
+                "reorders_all": [[0, 0, 0], [0, 0], [0, 0, 1, 0]],
+                "next_products_set": [5],
+                "order_dows": "5 0 5 1",
+                "order_hours": "23 1 17 16",
+                "days_since_prior_orders": "-1 30 60 25",
+                "order_numbers": "1 2 3 4",
+                "eval_set": "train",
+            },
+            {
+                "user_id": 20,
+                "products_set": [11, 5, 23, 300, 12, 20, 1000],
+                "products_all": [[11, 5, 23], [300, 23], [12, 20, 1000, 300, 11]],
+                "reorders_all": [[0, 1, 0], [0, 1], [1, 0, 0, 1, 1]],
+                "next_products_set": [20, 11, 1000],
+                "order_dows": "1 2 3 4",
+                "order_hours": "8 13 8 0",
+                "days_since_prior_orders": "10 19 22 6",
+                "order_numbers": "3 4 5 6",
+                "eval_set": "test",
+            },
+        ]
+    )
+    return df
+
+
 @pytest.fixture(scope="session")
 def spark():
     spark = create_spark_session("unit-test")
