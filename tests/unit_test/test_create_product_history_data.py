@@ -292,13 +292,6 @@ def test_build_each_product_in_order_history(
         schema=expected_schema,
     )
     expected_df = expected_df.select(SELECTED_COLUMNS)
-    print(len(actual_df.schema.fields))
-    print(len(expected_df.schema.fields))
-    for actual, expected in zip(actual_df.schema.fields, expected_df.schema.fields):
-        if actual != expected:
-            print(f"Column: {actual.name}")
-            print(f"  Actual  : {actual}")
-            print(f"  Expected: {expected}")
 
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
 
@@ -314,8 +307,6 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
         order_hours="23 1 17 16",
         days_since_prior_orders="-1 30 60 25",
         order_numbers="1 2 3 4",
-        history_order_size="3 2 4",
-        history_reorder_size="0 0 1",
         eval_set="train",
     )
     common_cols_2 = dict(
@@ -324,15 +315,13 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
         order_hours="8 13 8 0",
         days_since_prior_orders="10 19 22 6",
         order_numbers="3 4 5 6",
-        history_order_size="3 2 5",
-        history_reorder_size="0 1 2",
         eval_set="test",
     )
-    common_cols_3 = dict(product_id=0, aisle=0, department_id=0, product_name="")
+    common_cols_3 = dict(product_id=0, aisle_id=0, department_id=0, product_name="")
     expected_reorders = spark.createDataFrame(
         [
             Row(
-                label=1,
+                label=0,
                 is_ordered_history="1 1 0",
                 position_in_order_history="0 0 0",
                 history_order_size="3 2 4",
