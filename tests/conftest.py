@@ -158,24 +158,39 @@ def tiny_fake_testset_v1(tmp_path):
 
 
 @pytest.fixture
-def tiny_fake_testset_v2(spark):
+def fake_user_data(spark):
     return spark.createDataFrame(
         [
             (
                 10,
                 "1_2_3 0_10 5_323_1_12 5",
                 "0_0_0 1_1 1_0_1_0 1",
+                "train",
+                "5 0 5 1",
+                "23 1 17 16",
+                "-1 30 60 25",
+                "1 2 3 4",
             ),
             (
                 20,
-                "11_5 300 12_10_1000_300_33 20_11_75",
+                "11_5 300 12_20_1000_300_11 20_11_75",
                 "0_0 0 0_1_0_1_1 1_1_0",
+                "test",
+                "1 2 3 4",
+                "8 13 8 0",
+                "10 19 22 6",
+                "3 4 5 6",
             ),
         ],
         schema=[
             "user_id",
             "product_ids",
             "reorders",
+            "eval_set",
+            "order_dows",
+            "order_hours",
+            "days_since_prior_orders",
+            "order_numbers",
         ],
     )
 
