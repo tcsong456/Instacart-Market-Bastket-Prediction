@@ -326,7 +326,7 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
     )
     expected_schema = StructType(
         [
-            StructField("aisle_id", IntegerType(), False),
+            StructField("label", IntegerType(), True),
             StructField("is_ordered_history", StringType(), True),
             StructField("history_order_size", StringType(), True),
             StructField("history_reorder_size", StringType(), True),
@@ -337,7 +337,7 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
             StructField("order_numbers", StringType(), True),
             StructField("eval_set", StringType(), True),
             StructField("product_id", IntegerType(), False),
-            StructField("label", IntegerType(), True),
+            StructField("aisle_id", IntegerType(), False),
             StructField("department_id", IntegerType(), False),
             StructField("product_name", StringType(), False),
             StructField("position_in_order_history", StringType(), True),
@@ -373,7 +373,7 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
         print(f"\n=== user_id={a['user_id']} ===")
         for col in SELECTED_COLUMNS:
             av, ev = a[col], e[col]
-            if av != e:
+            if av != ev:
                 print(
                     f"  MISMATCH {col}: actual={av!r} ({type(av).__name__}) expected={ev!r} ({type(ev).__name__})"
                 )
