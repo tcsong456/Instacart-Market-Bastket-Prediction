@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd
 from pyspark.sql import Row
 from src.common.io import read_csv, read_parquet
 from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
@@ -13,23 +13,23 @@ from src.ingestion.create_product_history_data import (
 
 
 def test_parse_seq_with_set(spark, fake_user_data):
-    df = read_parquet(fake_user_data, spark)
+    df = read_parquet(fake_user_data / "user_data", spark)
     df = parse_seq(
         df=df, input_col="product_ids", prefix="products", calculate_set=True
     )
 
     row = df.filter("user_id==10").first()
-    assert row["products_raw"] == ["1_2_3", "0_10", "5_323_1_12", "5"]
-    assert row["products_prev"] == ["1_2_3", "0_10", "5_323_1_12"]
-    assert row["products_all"] == [[1, 2, 3], [0, 10], [5, 323, 1, 12]]
+    assert row["products_raw"] == ["1_2_3", "4_10", "5_323_1_12", "5"]
+    assert row["products_prev"] == ["1_2_3", "4_10", "5_323_1_12"]
+    assert row["products_all"] == [[1, 2, 3], [4, 10], [5, 323, 1, 12]]
     assert row["next_products"] == "5"
     assert row["next_products_int"] == [5]
-    assert sorted(row["products_set"]) == [0, 1, 2, 3, 5, 10, 12, 323]
+    assert sorted(row["products_set"]) == [1, 2, 3, 4, 5, 10, 12, 323]
     assert sorted(row["next_products_set"]) == [5]
 
 
 def test_parse_seq_without_set(spark, fake_user_data):
-    df = read_parquet(fake_user_data, spark)
+    df = read_parquet(fake_user_data / "user_data", spark)
     df = parse_seq(df=df, input_col="reorders", prefix="reorders", calculate_set=False)
 
     row = df.filter("user_id==20").first()
@@ -42,34 +42,22 @@ def test_parse_seq_without_set(spark, fake_user_data):
     assert "next_reorders_set" not in df.columns
 
 
-def test_filtered_orders(spark, tmp_path):
-    df = pd.DataFrame(
-        [
-            (10, 1, "train", 3, 23),
-            (20, 2, "prior", 0, 11),
-            (30, 3, "test", 1, 7),
-            (40, 4, "prior", 5, 1),
-        ],
-        columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
-    )
-    order_path = tmp_path / "orders.csv"
-    df.to_csv(order_path, index=False)
-
-    df = filtered_orders(tmp_path, spark)
+def test_filtered_orders(spark, fake_orders):
+    df = filtered_orders(fake_orders, spark)
 
     assert df.count() == 2
     assert set(df.columns) == {"user_id", "target_eval_set"}
 
     rows = {row["user_id"]: row["target_eval_set"] for row in df.collect()}
 
-    assert rows == {10: "train", 30: "test"}
+    assert rows == {10: "train", 20: "test"}
 
 
 def test_build_each_product_in_order_history(
     spark, fake_parse_seq_data, fake_filtered_orders, fake_products_data
 ):
     df = fake_parse_seq_data
-    orders = read_csv(fake_filtered_orders / "orders.csv", spark)
+    orders = read_csv(fake_filtered_orders / "filtered_orders.csv", spark)
 
     actual_df = build_each_product_in_order_history(
         path=fake_products_data, df=df, orders=orders, spark=spark
@@ -117,16 +105,6 @@ def test_build_each_product_in_order_history(
     expected_df = spark.createDataFrame(
         [
             Row(
-                product_id=0,
-                label=0,
-                is_ordered_history="0 1 0",
-                position_in_order_history="0 1 0",
-                product_name="a",
-                aisle_id=5,
-                department_id=30,
-                **common_cols_1,
-            ),
-            Row(
                 product_id=1,
                 label=0,
                 is_ordered_history="1 0 1",
@@ -154,6 +132,16 @@ def test_build_each_product_in_order_history(
                 product_name="d",
                 aisle_id=15,
                 department_id=30,
+                **common_cols_1,
+            ),
+            Row(
+                product_id=4,
+                label=0,
+                is_ordered_history="0 1 0",
+                position_in_order_history="0 1 0",
+                product_name="e",
+                aisle_id=10,
+                department_id=20,
                 **common_cols_1,
             ),
             Row(
@@ -277,7 +265,7 @@ def test_build_each_product_in_order_history(
 def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_orders):
     df = fake_parse_seq_data
 
-    orders = read_csv(fake_filtered_orders, spark)
+    orders = read_csv(fake_filtered_orders / "filtered_orders.csv", spark)
     actual_reorders = build_each_reorder_history(df, orders)
 
     common_cols_1 = dict(

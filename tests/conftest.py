@@ -11,10 +11,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 @pytest.fixture
-def tiny_fake_testset(tmp_path):
+def raw_dir(tmp_path):
     raw_dir = tmp_path / "raw"
-    raw_dir.mkdir()
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    return raw_dir
 
+
+@pytest.fixture
+def tiny_fake_testset(raw_dir):
     orders = pd.DataFrame(
         {
             "order_id": [1, 2, 3, 4, 5, 6],
@@ -159,29 +163,39 @@ def tiny_fake_testset_v1(tmp_path):
 
 
 @pytest.fixture
-def fake_filtered_orders(spark, tmp_path):
-    orders = spark.createDataFrame(
+def fake_filtered_orders(spark, raw_dir):
+    filtered_orders = spark.createDataFrame(
         [
             {"user_id": 10, "target_eval_set": "train"},
             {"user_id": 20, "target_eval_set": "test"},
         ]
     )
 
-    raw_dir = tmp_path / "raw"
-    raw_dir.mkdir(parents=True, exist_ok=True)
-    order_path = raw_dir / "orders.csv"
-    orders.toPandas().to_csv(order_path, index=False)
+    order_path = raw_dir / "filtered_orders.csv"
+    filtered_orders.toPandas().to_csv(order_path, index=False)
     return raw_dir
 
 
 @pytest.fixture
-def fake_products_data(tmp_path):
-    raw_dir = tmp_path / "raw"
-    raw_dir.mkdir(parents=True, exist_ok=True)
+def fake_orders(raw_dir):
+    orders = pd.DataFrame(
+        [
+            (10, 1, "train", 3, 23),
+            (20, 2, "test", 0, 11),
+            (30, 3, "prior", 1, 7),
+            (40, 4, "prior", 5, 1),
+        ],
+        columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
+    )
+    order_path = raw_dir / "orders.csv"
+    orders.to_csv(order_path, index=False)
+    return raw_dir
 
+
+@pytest.fixture
+def fake_products_data(raw_dir):
     products = pd.DataFrame(
         [
-            (0, "a", 5, 30),
             (1, "b", 5, 10),
             (2, "c", 10, 10),
             (3, "d", 15, 30),
@@ -213,7 +227,7 @@ def fake_user_data(spark, tmp_path):
         [
             (
                 10,
-                "1_2_3 0_10 5_323_1_12 5",
+                "1_2_3 4_10 5_323_1_12 5",
                 "0_0_0 1_1 1_0_1_0 1",
                 "train",
                 "5 0 5 1",
@@ -244,7 +258,7 @@ def fake_user_data(spark, tmp_path):
         ],
     )
 
-    write_parquet(curated_dir, user_data)
+    write_parquet(curated_dir / "user_data", user_data)
     return curated_dir
 
 
@@ -254,8 +268,8 @@ def fake_parse_seq_data(spark):
         [
             {
                 "user_id": 10,
-                "products_set": [0, 1, 2, 3, 5, 10, 12, 323],
-                "products_all": [[1, 2, 3], [0, 10], [5, 323, 1, 12]],
+                "products_set": [1, 2, 3, 4, 5, 10, 12, 323],
+                "products_all": [[1, 2, 3], [4, 10], [5, 323, 1, 12]],
                 "reorders_all": [[0, 0, 0], [0, 0], [0, 0, 1, 0]],
                 "next_products_set": [5],
                 "next_reorders_int": [1],

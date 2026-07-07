@@ -321,7 +321,6 @@ def build_product_history_data(
     reorder_history = build_each_reorder_history(reorders, orders)
     product_include_none_history = product_history.unionByName(reorder_history)
     write_parquet(output_dir, product_include_none_history)
-    spark.stop()
 
 
 if __name__ == "__main__":
@@ -333,3 +332,4 @@ if __name__ == "__main__":
         raw_dir=args.raw_dir,
         output_dir=args.output_dir,
     )
+    spark.stop()
