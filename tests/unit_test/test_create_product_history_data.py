@@ -114,6 +114,7 @@ def test_build_each_product_in_order_history(spark, tmp_path):
             (1000, "m", 20, 40),
             (323, "n", 10, 20),
             (300, "o", 15, 40),
+            (23, "z", 25, 50),
         ],
         columns=["product_id", "product_name", "aisle_id", "department_id"],
     )
@@ -174,6 +175,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 label=0,
                 is_ordered_history="0 1 0",
                 position_in_order_history="0 1 0",
+                product_name="a",
+                aisle_id=5,
+                department_id=30,
                 **common_cols_1,
             ),
             Row(
@@ -181,6 +185,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 label=0,
                 is_ordered_history="1 0 1",
                 position_in_order_history="1 0 3",
+                product_name="b",
+                aisle_id=5,
+                department_id=10,
                 **common_cols_1,
             ),
             Row(
@@ -188,6 +195,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 label=0,
                 is_ordered_history="1 0 0",
                 position_in_order_history="2 0 0",
+                product_name="c",
+                aisle_id=10,
+                department_id=10,
                 **common_cols_1,
             ),
             Row(
@@ -195,6 +205,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 label=0,
                 is_ordered_history="1 0 0",
                 position_in_order_history="3 0 0",
+                product_name="d",
+                aisle_id=15,
+                department_id=30,
                 **common_cols_1,
             ),
             Row(
@@ -202,6 +215,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 label=1,
                 is_ordered_history="0 0 1",
                 position_in_order_history="0 0 1",
+                product_name="f",
+                aisle_id=5,
+                department_id=10,
                 **common_cols_1,
             ),
             Row(
@@ -209,6 +225,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 label=0,
                 is_ordered_history="0 1 0",
                 position_in_order_history="0 2 0",
+                product_name="g",
+                aisle_id=20,
+                department_id=40,
                 **common_cols_1,
             ),
             Row(
@@ -216,6 +235,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 label=0,
                 is_ordered_history="0 0 1",
                 position_in_order_history="0 0 4",
+                product_name="i",
+                aisle_id=15,
+                department_id=20,
                 **common_cols_1,
             ),
             Row(
@@ -224,6 +246,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="0 0 1",
                 position_in_order_history="0 0 2",
                 **common_cols_1,
+                product_name="n",
+                aisle_id=10,
+                department_id=20,
             ),
             Row(
                 product_id=5,
@@ -231,6 +256,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="1 0 0",
                 position_in_order_history="2 0 0",
                 **common_cols_2,
+                product_name="f",
+                aisle_id=5,
+                department_id=10,
             ),
             Row(
                 product_id=11,
@@ -238,6 +266,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="1 0 1",
                 position_in_order_history="1 0 5",
                 **common_cols_2,
+                product_name="h",
+                aisle_id=5,
+                department_id=30,
             ),
             Row(
                 product_id=12,
@@ -245,6 +276,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="0 0 1",
                 position_in_order_history="0 0 1",
                 **common_cols_2,
+                product_name="i",
+                aisle_id=15,
+                department_id=20,
             ),
             Row(
                 product_id=20,
@@ -252,6 +286,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="0 0 1",
                 position_in_order_history="0 0 2",
                 **common_cols_2,
+                product_name="l",
+                aisle_id=20,
+                department_id=30,
             ),
             Row(
                 product_id=23,
@@ -259,6 +296,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="1 1 0",
                 position_in_order_history="3 2 0",
                 **common_cols_2,
+                product_name="z",
+                aisle_id=25,
+                department_id=50,
             ),
             Row(
                 product_id=300,
@@ -266,6 +306,9 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="0 1 1",
                 position_in_order_history="0 1 4",
                 **common_cols_2,
+                product_name="o",
+                aisle_id=15,
+                department_id=40,
             ),
             Row(
                 product_id=1000,
@@ -273,12 +316,13 @@ def test_build_each_product_in_order_history(spark, tmp_path):
                 is_ordered_history="0 0 1",
                 position_in_order_history="0 0 3",
                 **common_cols_2,
+                product_name="m",
+                aisle_id=20,
+                department_id=40,
             ),
         ],
         schema=expected_schema,
     )
-    products_spark = spark.createDataFrame(products)
-    expected_df = expected_df.join(products_spark, how="left", on="product_id")
     expected_df = expected_df.select(SELECTED_COLUMNS)
 
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
