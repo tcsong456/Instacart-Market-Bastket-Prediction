@@ -7,7 +7,7 @@ def test_build_product_history_data_pipeline(
 ):
     output_dir = tmp_path / "product_data"
     build_product_history_data(
-        input_dir=fake_user_data, raw_dir=raw_dir, output_dir=output_dir
+        input_dir=fake_user_data, raw_dir=raw_dir, output_dir=output_dir, spark=spark
     )
 
     result = read_parquet(output_dir, spark)
