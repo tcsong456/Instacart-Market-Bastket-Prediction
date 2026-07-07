@@ -11,10 +11,14 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 
 @pytest.fixture
-def tiny_fake_testset(tmp_path):
+def raw_dir(tmp_path):
     raw_dir = tmp_path / "raw"
-    raw_dir.mkdir()
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    return raw_dir
 
+
+@pytest.fixture
+def tiny_fake_testset(raw_dir):
     orders = pd.DataFrame(
         {
             "order_id": [1, 2, 3, 4, 5, 6],
@@ -159,7 +163,7 @@ def tiny_fake_testset_v1(tmp_path):
 
 
 @pytest.fixture
-def fake_filtered_orders(spark, tmp_path):
+def fake_filtered_orders(spark, raw_dir):
     orders = spark.createDataFrame(
         [
             {"user_id": 10, "target_eval_set": "train"},
@@ -167,18 +171,13 @@ def fake_filtered_orders(spark, tmp_path):
         ]
     )
 
-    raw_dir = tmp_path / "raw"
-    raw_dir.mkdir(parents=True, exist_ok=True)
     order_path = raw_dir / "orders.csv"
     orders.toPandas().to_csv(order_path, index=False)
     return raw_dir
 
 
 @pytest.fixture
-def fake_products_data(tmp_path):
-    raw_dir = tmp_path / "raw"
-    raw_dir.mkdir(parents=True, exist_ok=True)
-
+def fake_products_data(raw_dir):
     products = pd.DataFrame(
         [
             (0, "a", 5, 30),
@@ -244,7 +243,7 @@ def fake_user_data(spark, tmp_path):
         ],
     )
 
-    write_parquet(curated_dir, user_data)
+    write_parquet(curated_dir / "user_data", user_data)
     return curated_dir
 
 

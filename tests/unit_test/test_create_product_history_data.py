@@ -13,7 +13,7 @@ from src.ingestion.create_product_history_data import (
 
 
 def test_parse_seq_with_set(spark, fake_user_data):
-    df = read_parquet(fake_user_data, spark)
+    df = read_parquet(fake_user_data / "user_data", spark)
     df = parse_seq(
         df=df, input_col="product_ids", prefix="products", calculate_set=True
     )
@@ -29,7 +29,7 @@ def test_parse_seq_with_set(spark, fake_user_data):
 
 
 def test_parse_seq_without_set(spark, fake_user_data):
-    df = read_parquet(fake_user_data, spark)
+    df = read_parquet(fake_user_data / "user_data", spark)
     df = parse_seq(df=df, input_col="reorders", prefix="reorders", calculate_set=False)
 
     row = df.filter("user_id==20").first()
