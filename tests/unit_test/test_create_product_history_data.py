@@ -160,7 +160,7 @@ def test_build_each_product_in_order_history(spark, tmp_path):
             StructField("days_since_prior_orders", StringType(), True),
             StructField("order_numbers", StringType(), True),
             StructField("history_order_size", StringType(), True),
-            StructField("history_reorder_size", StringType(), True),
+            StructField("history_reorder_size", StringType(), False),
             StructField("eval_set", StringType(), True),
         ]
     )
