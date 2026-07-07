@@ -158,6 +158,16 @@ def tiny_fake_testset_v1(tmp_path):
 
 
 @pytest.fixture
+def fake_filtered_orders(spark):
+    return spark.createDataFrame(
+        [
+            {"user_id": 10, "target_eval_set": "train"},
+            {"user_id": 20, "target_eval_set": "test"},
+        ]
+    )
+
+
+@pytest.fixture
 def fake_user_data(spark):
     return spark.createDataFrame(
         [
@@ -205,6 +215,7 @@ def fake_parse_seq_data(spark):
                 "products_all": [[1, 2, 3], [0, 10], [5, 323, 1, 12]],
                 "reorders_all": [[0, 0, 0], [0, 0], [0, 0, 1, 0]],
                 "next_products_set": [5],
+                "next_reorders_int": [1],
                 "order_dows": "5 0 5 1",
                 "order_hours": "23 1 17 16",
                 "days_since_prior_orders": "-1 30 60 25",
@@ -216,7 +227,8 @@ def fake_parse_seq_data(spark):
                 "products_set": [11, 5, 23, 300, 12, 20, 1000],
                 "products_all": [[11, 5, 23], [300, 23], [12, 20, 1000, 300, 11]],
                 "reorders_all": [[0, 1, 0], [0, 1], [1, 0, 0, 1, 1]],
-                "next_products_set": [20, 11, 1000],
+                "next_products_set": [],
+                "next_reorders_int": [],
                 "order_dows": "1 2 3 4",
                 "order_hours": "8 13 8 0",
                 "days_since_prior_orders": "10 19 22 6",

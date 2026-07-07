@@ -7,6 +7,7 @@ from src.ingestion.create_product_history_data import (
     filtered_orders,
     build_each_product_in_order_history,
     SELECTED_COLUMNS,
+    build_each_reorder_history,
 )
 
 
@@ -63,14 +64,11 @@ def test_filtered_orders(spark, tmp_path):
     assert rows == {10: "train", 30: "test"}
 
 
-def test_build_each_product_in_order_history(spark, tmp_path, fake_parse_seq_data):
+def test_build_each_product_in_order_history(
+    spark, tmp_path, fake_parse_seq_data, fake_filtered_orders
+):
     df = fake_parse_seq_data
-    orders = spark.createDataFrame(
-        [
-            {"user_id": 10, "target_eval_set": "train"},
-            {"user_id": 20, "target_eval_set": "test"},
-        ]
-    )
+    orders = fake_filtered_orders
 
     products = pd.DataFrame(
         [
@@ -296,3 +294,76 @@ def test_build_each_product_in_order_history(spark, tmp_path, fake_parse_seq_dat
     expected_df = expected_df.select(SELECTED_COLUMNS)
 
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
+
+
+def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_orders):
+    df = fake_parse_seq_data
+
+    actual_reorders = build_each_reorder_history(df, fake_filtered_orders)
+
+    common_cols_1 = dict(
+        user_id=10,
+        order_dows="5 0 5 1",
+        order_hours="23 1 17 16",
+        days_since_prior_orders="-1 30 60 25",
+        order_numbers="1 2 3 4",
+        eval_set="train",
+    )
+    common_cols_2 = dict(
+        user_id=20,
+        order_dows="1 2 3 4",
+        order_hours="8 13 8 0",
+        days_since_prior_orders="10 19 22 6",
+        order_numbers="3 4 5 6",
+        eval_set="test",
+    )
+    common_cols_3 = dict(
+        product_id=0,
+        aisle_id=0,
+        department_id=0,
+        product_name="",
+        position_in_order_history="0 0 0",
+    )
+    expected_schema = StructType(
+        [
+            StructField("label", IntegerType(), True),
+            StructField("is_ordered_history", StringType(), True),
+            StructField("history_order_size", StringType(), True),
+            StructField("history_reorder_size", StringType(), True),
+            StructField("user_id", LongType(), True),
+            StructField("order_dows", StringType(), True),
+            StructField("order_hours", StringType(), True),
+            StructField("days_since_prior_orders", StringType(), True),
+            StructField("order_numbers", StringType(), True),
+            StructField("eval_set", StringType(), True),
+            StructField("product_id", IntegerType(), False),
+            StructField("aisle_id", IntegerType(), False),
+            StructField("department_id", IntegerType(), False),
+            StructField("product_name", StringType(), False),
+            StructField("position_in_order_history", StringType(), True),
+        ]
+    )
+    expected_reorders = spark.createDataFrame(
+        [
+            Row(
+                label=0,
+                is_ordered_history="1 1 0",
+                history_order_size="3 2 4",
+                history_reorder_size="0 0 1",
+                **common_cols_1,
+                **common_cols_3,
+            ),
+            Row(
+                label=-1,
+                is_ordered_history="0 0 0",
+                history_order_size="3 2 5",
+                history_reorder_size="1 1 3",
+                **common_cols_2,
+                **common_cols_3,
+            ),
+        ],
+        schema=expected_schema,
+    )
+    expected_reorders = expected_reorders.select(SELECTED_COLUMNS)
+
+    assert_spark_df_equal(actual_reorders, expected_reorders, ["user_id"])
