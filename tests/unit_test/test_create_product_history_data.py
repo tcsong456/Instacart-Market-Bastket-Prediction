@@ -42,8 +42,8 @@ def test_parse_seq_without_set(spark, fake_user_data):
     assert "next_reorders_set" not in df.columns
 
 
-def test_filtered_orders(spark, fake_orders, raw_dir):
-    df = filtered_orders(raw_dir, spark)
+def test_filtered_orders(spark, fake_orders):
+    df = filtered_orders(fake_orders, spark)
 
     assert df.count() == 2
     assert set(df.columns) == {"user_id", "target_eval_set"}
