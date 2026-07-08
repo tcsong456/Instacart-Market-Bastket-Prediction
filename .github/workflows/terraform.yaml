@@ -18,19 +18,19 @@ jobs:
         working-directory: terraform/dev
   
     steps:
-      - name: checkout repo
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          terraofrm_version: "1.9.x"
-      
-      - name: setup terraform
+
+      - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.x"
       
-      - name: terraform fmt
+      - name: Terraform fmt
         run: terraform fmt -check -recursive
       
-      - name: terraform init
+      - name: Terraform init
         run: terraform init -backend=false
 
-      - name: terraform validation
+      - name: Terraform validation
         run: terraform validate
