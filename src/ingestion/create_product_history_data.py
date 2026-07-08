@@ -125,7 +125,39 @@ def build_each_product_in_order_history(
     df = df.join(orders, how="left", on="user_id")
 
     df = (
-        df.withColumn("product_id", F.explode("products_set"))
+        df.withColumn(
+            "history_order_size",
+            F.expr("""
+                   array_join(
+                    transform(products_all, x -> size(x)),
+                   ' '
+                )
+        """),
+        )
+        .withColumn(
+            "history_reorder_size",
+            F.expr(
+                """
+                array_join(
+                    transform(
+                        sequence(1, size(products_all)),
+                        i ->
+                        CASE
+                        WHEN i = 1 THEN 0 ELSE
+                        size(
+                            array_intersect(
+                                array_distinct(flatten(slice(products_all, 1, i - 1))),
+                                element_at(products_all, i)
+                            )
+                        )
+                        END
+                    ),
+                    ' '
+                )
+                """
+            ),
+        )
+        .withColumn("product_id", F.explode("products_set"))
         .withColumn(
             "label",
             F.when(
@@ -159,38 +191,6 @@ def build_each_product_in_order_history(
                             WHEN array_contains(x, product_id)
                             THEN array_position(x, product_id)
                             ELSE 0
-                        END
-                    ),
-                    ' '
-                )
-                """
-            ),
-        )
-        .withColumn(
-            "history_order_size",
-            F.expr("""
-                   array_join(
-                    transform(products_all, x -> size(x)),
-                   ' '
-                )
-            """),
-        )
-        .withColumn(
-            "history_reorder_size",
-            F.expr(
-                """
-                array_join(
-                    transform(
-                        sequence(1, size(products_all)),
-                        i ->
-                        CASE
-                        WHEN i = 1 THEN 0 ELSE
-                        size(
-                            array_intersect(
-                                array_distinct(flatten(slice(products_all, 1, i - 1))),
-                                element_at(products_all, i)
-                            )
-                        )
                         END
                     ),
                     ' '
