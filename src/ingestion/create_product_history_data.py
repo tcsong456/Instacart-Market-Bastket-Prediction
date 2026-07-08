@@ -301,7 +301,10 @@ def parse_args():
 
 
 def build_product_history_data(
-    spark: SparkSession, input_dir: Path | str, raw_dir: Path | str, output_dir: Path | str
+    spark: SparkSession,
+    input_dir: Path | str,
+    raw_dir: Path | str,
+    output_dir: Path | str,
 ) -> None:
     """
     Args:
@@ -311,7 +314,7 @@ def build_product_history_data(
         each  user-product pair ready downstream model training
     """
     orders = filtered_orders(raw_dir, spark)
-    user_data_path = gcs_join(input_dir, 'user_data')
+    user_data_path = gcs_join(input_dir, "user_data")
     df = read_parquet(user_data_path, spark)
     products = parse_seq(df, "product_ids", "products", True)
     reorders = parse_seq(df, "reorders", "reorders")
