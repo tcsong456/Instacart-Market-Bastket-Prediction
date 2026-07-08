@@ -5,6 +5,9 @@ resource "google_dataproc_cluster" "instacart_cluster" {
   cluster_config {
     staging_bucket = google_storage_bucket.dataproc_staging.name
 
+    endpoint_config {
+      enable_http_port_access = true
+    }
 
     gce_cluster_config {
       zone            = "${var.region}-b"

@@ -82,7 +82,7 @@ def parse_seq(
     return df
 
 
-def filtered_orders(path: Path, spark: SparkSession) -> DataFrame:
+def filtered_orders(path: Path | str, spark: SparkSession) -> DataFrame:
     """
      Args:
         path: Directory that contains all instacart data
@@ -101,7 +101,7 @@ def filtered_orders(path: Path, spark: SparkSession) -> DataFrame:
 
 
 def build_each_product_in_order_history(
-    path: Path, df: DataFrame, orders: DataFrame, spark: SparkSession
+    path: Path | str, df: DataFrame, orders: DataFrame, spark: SparkSession
 ) -> DataFrame:
     """
     Generate per-product history features for each user
@@ -294,14 +294,17 @@ def build_each_reorder_history(df: DataFrame, orders: DataFrame) -> DataFrame:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input-dir", type=Path, required=True)
-    parser.add_argument("--raw-dir", type=Path, required=True)
+    parser.add_argument("--input-dir", required=True)
+    parser.add_argument("--raw-dir", required=True)
     parser.add_argument("--output-dir", required=True)
     return parser.parse_args()
 
 
 def build_product_history_data(
-    spark: SparkSession, input_dir: Path, raw_dir: Path, output_dir: Path
+    spark: SparkSession,
+    input_dir: Path | str,
+    raw_dir: Path | str,
+    output_dir: Path | str,
 ) -> None:
     """
     Args:
@@ -310,9 +313,9 @@ def build_product_history_data(
         A dataframe that contains aggregated historical features for
         each  user-product pair ready downstream model training
     """
-
     orders = filtered_orders(raw_dir, spark)
-    df = read_parquet(input_dir / "user_data", spark)
+    user_data_path = gcs_join(input_dir, "user_data")
+    df = read_parquet(user_data_path, spark)
     products = parse_seq(df, "product_ids", "products", True)
     reorders = parse_seq(df, "reorders", "reorders")
     product_history = build_each_product_in_order_history(
@@ -320,7 +323,7 @@ def build_product_history_data(
     )
     reorder_history = build_each_reorder_history(reorders, orders)
     product_include_none_history = product_history.unionByName(reorder_history)
-    write_parquet(output_dir, product_include_none_history)
+    write_parquet(output_dir, product_include_none_history.coalesce(64))
 
 
 if __name__ == "__main__":
