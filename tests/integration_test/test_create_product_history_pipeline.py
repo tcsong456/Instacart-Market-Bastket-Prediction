@@ -240,5 +240,5 @@ def test_build_product_history_data_pipeline(
         ],
         schema=expected_schema,
     )
-
+    actual_df.printSchema()
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
