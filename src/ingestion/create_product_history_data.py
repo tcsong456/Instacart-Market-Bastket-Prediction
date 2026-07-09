@@ -1,8 +1,7 @@
 import argparse
 from src.common.utils import gcs_join
 from src.common.spark import create_spark_session
-from src.common.io import read_parquet, read_csv, write_parquet
-from pathlib import Path
+from src.common.io import read_parquet, write_parquet
 from pyspark.sql import DataFrame, functions as F, SparkSession
 
 
@@ -82,7 +81,7 @@ def parse_seq(
     return df
 
 
-def filtered_orders(path: Path | str, spark: SparkSession) -> DataFrame:
+def filtered_orders(path: str, spark: SparkSession) -> DataFrame:
     """
      Args:
         path: Directory that contains all instacart data
@@ -92,8 +91,8 @@ def filtered_orders(path: Path | str, spark: SparkSession) -> DataFrame:
         either 'train' or test
     """
 
-    orders_path = gcs_join(path, "orders.csv")
-    orders = read_csv(path=orders_path, spark=spark)
+    orders_path = gcs_join(path, "orders")
+    orders = read_parquet(path=orders_path, spark=spark)
     orders = orders.filter(F.col("eval_set").isin("train", "test")).select(
         "user_id", F.col("eval_set").alias("target_eval_set")
     )
@@ -101,7 +100,7 @@ def filtered_orders(path: Path | str, spark: SparkSession) -> DataFrame:
 
 
 def build_each_product_in_order_history(
-    path: Path | str, df: DataFrame, orders: DataFrame, spark: SparkSession
+    path: str, df: DataFrame, orders: DataFrame, spark: SparkSession
 ) -> DataFrame:
     """
     Generate per-product history features for each user
@@ -119,8 +118,8 @@ def build_each_product_in_order_history(
         order history features
     """
 
-    product_path = gcs_join(path, "products.csv")
-    products = read_csv(path=product_path, spark=spark)
+    product_path = gcs_join(path, "products")
+    products = read_parquet(path=product_path, spark=spark)
 
     df = df.join(orders, how="left", on="user_id")
 
@@ -302,9 +301,9 @@ def parse_args():
 
 def build_product_history_data(
     spark: SparkSession,
-    input_dir: Path | str,
-    raw_dir: Path | str,
-    output_dir: Path | str,
+    input_dir: str,
+    raw_dir: str,
+    output_dir: str,
 ) -> None:
     """
     Args:
@@ -323,7 +322,7 @@ def build_product_history_data(
     )
     reorder_history = build_each_reorder_history(reorders, orders)
     product_include_none_history = product_history.unionByName(reorder_history)
-    write_parquet(output_dir, product_include_none_history.coalesce(64))
+    write_parquet(output_dir, product_include_none_history)
 
 
 if __name__ == "__main__":

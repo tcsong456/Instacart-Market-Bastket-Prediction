@@ -7,7 +7,7 @@ variable "region" {
   default = "europe-west1"
 }
 
-variable "data_bucket_name" {
+variable "raw_bucket_name" {
   type = string
 }
 
@@ -15,7 +15,15 @@ variable "dataproc_staging_bucket_name" {
   type = string
 }
 
-variable "curated_bucket_name" {
+variable "bronze_bucket_name" {
+  type = string
+}
+
+variable "silver_bucket_name" {
+  type = string
+}
+
+variable "gold_bucket_name" {
   type = string
 }
 
