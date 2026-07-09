@@ -90,8 +90,8 @@ def test_build_each_product_in_order_history(
             StructField("is_ordered_history", StringType(), True),
             StructField("position_in_order_history", StringType(), True),
             StructField("product_name", StringType(), True),
-            StructField("aisle_id", IntegerType(), True),
-            StructField("department_id", IntegerType(), True),
+            StructField("aisle_id", LongType(), True),
+            StructField("department_id", LongType(), True),
             StructField("user_id", LongType(), True),
             StructField("order_dows", StringType(), True),
             StructField("order_hours", StringType(), True),
@@ -259,8 +259,6 @@ def test_build_each_product_in_order_history(
     )
     expected_df = expected_df.select(SELECTED_COLUMNS)
 
-    actual_df.printSchema()
-
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
 
 
@@ -334,5 +332,5 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
         schema=expected_schema,
     )
     expected_reorders = expected_reorders.select(SELECTED_COLUMNS)
-
+    actual_reorders.printSchema()
     assert_spark_df_equal(actual_reorders, expected_reorders, ["user_id"])
