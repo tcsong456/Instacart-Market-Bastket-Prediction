@@ -282,7 +282,7 @@ def fake_orders(spark, raw_dir):
 
 
 @pytest.fixture
-def fake_products_data(raw_dir):
+def fake_products_data(spark, raw_dir):
     products = spark.createDataFrame(
         [
             (1, "b", 5, 10),
