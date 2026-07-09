@@ -304,8 +304,8 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
             StructField("order_numbers", StringType(), True),
             StructField("eval_set", StringType(), True),
             StructField("product_id", IntegerType(), False),
-            StructField("aisle_id", LongType(), False),
-            StructField("department_id", LongType(), False),
+            StructField("aisle_id", IntegerType(), False),
+            StructField("department_id", IntegerType(), False),
             StructField("product_name", StringType(), False),
             StructField("position_in_order_history", StringType(), True),
         ]
@@ -332,5 +332,5 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
         schema=expected_schema,
     )
     expected_reorders = expected_reorders.select(SELECTED_COLUMNS)
-    actual_reorders.printSchema()
+
     assert_spark_df_equal(actual_reorders, expected_reorders, ["user_id"])
