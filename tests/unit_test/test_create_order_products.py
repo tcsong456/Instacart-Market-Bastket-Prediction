@@ -2,8 +2,10 @@ import pytest
 from pyspark.sql.types import StringType, IntegerType, StructField, StructType
 from src.ingestion.create_order_products import (
     fill_nans,
-    load_csv_data,
+    load_parquet_data,
     validate_join_counts,
+)
+from src.common.utils import (
     ORDER_PRODUCTS_SCHEMA,
     ORDERS_SCHEMA,
     PRODUCTS_SCHEMA,
@@ -26,9 +28,9 @@ def test_validate_join_counts_fails_when_mismatch(spark):
         validate_join_counts(df1, df2)
 
 
-def test_load_csv_data(spark, tiny_fake_testset):
-    orders, products, order_prior, order_train = load_csv_data(
-        path_dir=tiny_fake_testset, spark=spark
+def test_load_parquet_data(spark, tiny_fake_testset_parquet):
+    orders, products, order_prior, order_train = load_parquet_data(
+        path_dir=tiny_fake_testset_parquet, spark=spark
     )
 
     assert orders.count() == 6
