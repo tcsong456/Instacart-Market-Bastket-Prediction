@@ -304,8 +304,8 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
             StructField("order_numbers", StringType(), True),
             StructField("eval_set", StringType(), True),
             StructField("product_id", IntegerType(), False),
-            StructField("aisle_id", IntegerType(), False),
-            StructField("department_id", IntegerType(), False),
+            StructField("aisle_id", LongType(), False),
+            StructField("department_id", LongType(), False),
             StructField("product_name", StringType(), False),
             StructField("position_in_order_history", StringType(), True),
         ]
