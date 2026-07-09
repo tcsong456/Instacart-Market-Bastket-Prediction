@@ -49,8 +49,8 @@ def test_build_product_history_data_pipeline(
             StructField("is_ordered_history", StringType(), True),
             StructField("position_in_order_history", StringType(), True),
             StructField("product_name", StringType(), True),
-            StructField("aisle_id", IntegerType(), True),
-            StructField("department_id", IntegerType(), True),
+            StructField("aisle_id", LongType(), True),
+            StructField("department_id", LongType(), True),
             StructField("user_id", LongType(), True),
             StructField("eval_set", StringType(), True),
             StructField("order_dows", StringType(), True),
@@ -240,5 +240,5 @@ def test_build_product_history_data_pipeline(
         ],
         schema=expected_schema,
     )
-    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
