@@ -18,7 +18,7 @@ def raw_dir(tmp_path):
 
 
 @pytest.fixture
-def tiny_fake_testset(raw_dir):
+def tiny_fake_testset_csv(raw_dir):
     orders = pd.DataFrame(
         {
             "order_id": [1, 2, 3, 4, 5, 6],
@@ -83,81 +83,176 @@ def tiny_fake_testset(raw_dir):
 
 
 @pytest.fixture
-def tiny_fake_testset_v1(tmp_path):
+def tiny_fake_testset_parquet(spark, raw_dir):
+    orders = spark.createDataFrame(
+        [
+            (1, 10, "prior", 1, 1, 10, None),
+            (2, 10, "train", 2, 2, 11, 7),
+            (3, 20, "prior", 1, 1, 10, None),
+            (4, 20, "train", 2, 2, 11, 5),
+            (5, 30, "prior", 1, 1, 10, None),
+            (6, 30, "test", 2, 2, 11, 3),
+        ],
+        [
+            "order_id",
+            "user_id",
+            "eval_set",
+            "order_number",
+            "order_dow",
+            "order_hour_of_day",
+            "days_since_prior_order",
+        ],
+    )
+
+    prior = spark.createDataFrame(
+        [
+            (1, 101, 1, 0),
+            (3, 201, 1, 0),
+            (5, 301, 1, 0),
+        ],
+        [
+            "order_id",
+            "product_id",
+            "add_to_cart_order",
+            "reordered",
+        ],
+    )
+
+    train = spark.createDataFrame(
+        [
+            (2, 102, 1, 1),
+            (4, 202, 1, 1),
+        ],
+        ["order_id", "product_id", "add_to_cart_order", "reordered"],
+    )
+
+    products = spark.createDataFrame(
+        [
+            (101, "a", 1, 10),
+            (102, "b", 1, 10),
+            (201, "c", 2, 20),
+            (202, "d", 2, 20),
+            (301, "e", 3, 30),
+        ],
+        ["product_id", "product_name", "aisle_id", "department_id"],
+    )
+
+    aisles = spark.createDataFrame(
+        [
+            (1, "fresh"),
+            (2, "dairy"),
+            (3, "snacks"),
+        ],
+        ["aisle_id", "aisle"],
+    )
+
+    departments = spark.createDataFrame(
+        [
+            (10, "produce"),
+            (20, "frozen"),
+            (30, "pantry"),
+        ],
+        ["department_id", "department"],
+    )
+
+    write_parquet(raw_dir / "orders", orders)
+    write_parquet(raw_dir / "order_products__prior", prior)
+    write_parquet(raw_dir / "order_products__train", train)
+    write_parquet(raw_dir / "products", products)
+    write_parquet(raw_dir / "aisles", aisles)
+    write_parquet(raw_dir / "departments", departments)
+
+    return raw_dir
+
+
+@pytest.fixture
+def tiny_fake_testset_v1(spark, tmp_path):
     raw_dir = tmp_path / "raw_v1"
     raw_dir.mkdir()
 
-    orders = pd.DataFrame(
-        {
-            "order_id": [1, 2, 3, 4, 5, 6],
-            "user_id": [10, 10, 20, 20, 30, 30],
-            "eval_set": ["prior", "train", "prior", "train", "prior", "test"],
-            "order_number": [1, 2, 1, 2, 1, 2],
-            "order_dow": [1, 2, 1, 2, 1, 2],
-            "order_hour_of_day": [10, 11, 10, 11, 10, 11],
-            "days_since_prior_order": [None, 7, None, 5, None, 3],
-        }
+    orders = spark.createDataFrame(
+        [
+            (1, 10, "prior", 1, 1, 10, None),
+            (2, 10, "train", 2, 2, 11, 7),
+            (3, 20, "prior", 1, 1, 10, None),
+            (4, 20, "train", 2, 2, 11, 5),
+            (5, 30, "prior", 1, 1, 10, None),
+            (6, 30, "test", 2, 2, 11, 3),
+        ],
+        [
+            "order_id",
+            "user_id",
+            "eval_set",
+            "order_number",
+            "order_dow",
+            "order_hour_of_day",
+            "days_since_prior_order",
+        ],
     )
 
-    prior = pd.DataFrame(
-        {
-            "order_id": [1, 1, 1, 3, 3, 5],
-            "product_id": [101, 100, 110, 301, 201, 400],
-            "add_to_cart_order": [2, 3, 1, 2, 1, 1],
-            "reordered": [0, 1, 0, 1, 0, 1],
-        }
+    prior = spark.createDataFrame(
+        [
+            (1, 101, 2, 0),
+            (1, 100, 3, 1),
+            (1, 110, 1, 0),
+            (3, 301, 2, 1),
+            (3, 201, 1, 0),
+            (5, 400, 1, 1),
+        ],
+        [
+            "order_id",
+            "product_id",
+            "add_to_cart_order",
+            "reordered",
+        ],
     )
 
-    train = pd.DataFrame(
-        {
-            "order_id": [2, 2, 2, 2, 4, 4, 6],
-            "product_id": [102, 202, 99, 57, 20, 200, 501],
-            "add_to_cart_order": [1, 3, 4, 2, 1, 2, 1],
-            "reordered": [1, 1, 0, 1, 1, 0, 0],
-        }
+    train = spark.createDataFrame(
+        [
+            (2, 102, 1, 1),
+            (2, 202, 3, 1),
+            (2, 99, 4, 0),
+            (2, 57, 2, 1),
+            (4, 20, 1, 1),
+            (4, 200, 2, 0),
+            (6, 501, 1, 0),
+        ],
+        [
+            "order_id",
+            "product_id",
+            "add_to_cart_order",
+            "reordered",
+        ],
     )
 
-    products = pd.DataFrame(
-        {
-            "product_id": [
-                20,
-                57,
-                99,
-                100,
-                101,
-                102,
-                110,
-                200,
-                201,
-                202,
-                301,
-                400,
-                501,
-            ],
-            "product_name": [
-                "a",
-                "b",
-                "c",
-                "d",
-                "e",
-                "f",
-                "g",
-                "h",
-                "i",
-                "j",
-                "k",
-                "l",
-                "m",
-            ],
-            "aisle_id": [1, 1, 2, 2, 3, 1, 3, 4, 4, 2, 1, 5, 2],
-            "department_id": [10, 10, 20, 20, 30, 10, 30, 40, 40, 20, 10, 50, 20],
-        }
+    products = spark.createDataFrame(
+        [
+            (20, "a", 1, 10),
+            (57, "b", 1, 10),
+            (99, "c", 2, 20),
+            (100, "d", 2, 20),
+            (101, "e", 3, 30),
+            (102, "f", 1, 10),
+            (110, "g", 3, 30),
+            (200, "h", 4, 40),
+            (201, "i", 4, 40),
+            (202, "j", 2, 20),
+            (301, "k", 1, 10),
+            (400, "l", 5, 50),
+            (501, "m", 2, 20),
+        ],
+        [
+            "product_id",
+            "product_name",
+            "aisle_id",
+            "department_id",
+        ],
     )
 
-    orders.to_csv(raw_dir / "orders.csv", index=False)
-    prior.to_csv(raw_dir / "order_products__prior.csv", index=False)
-    train.to_csv(raw_dir / "order_products__train.csv", index=False)
-    products.to_csv(raw_dir / "products.csv", index=False)
+    write_parquet(raw_dir / "orders", orders)
+    write_parquet(raw_dir / "order_products__prior", prior)
+    write_parquet(raw_dir / "order_products__train", train)
+    write_parquet(raw_dir / "products", products)
 
     return raw_dir
 
@@ -177,24 +272,30 @@ def fake_filtered_orders(spark, raw_dir):
 
 
 @pytest.fixture
-def fake_orders(raw_dir):
-    orders = pd.DataFrame(
+def fake_orders(spark, raw_dir):
+    orders = spark.createDataFrame(
         [
             (10, 1, "train", 3, 23),
             (20, 2, "test", 0, 11),
             (30, 3, "prior", 1, 7),
             (40, 4, "prior", 5, 1),
         ],
-        columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
+        [
+            "user_id",
+            "order_id",
+            "eval_set",
+            "order_dow",
+            "order_hour_of_day",
+        ],
     )
-    order_path = raw_dir / "orders.csv"
-    orders.to_csv(order_path, index=False)
+    order_path = raw_dir / "orders"
+    write_parquet(order_path, orders)
     return raw_dir
 
 
 @pytest.fixture
-def fake_products_data(raw_dir):
-    products = pd.DataFrame(
+def fake_products_data(spark, raw_dir):
+    products = spark.createDataFrame(
         [
             (1, "b", 5, 10),
             (2, "c", 10, 10),
@@ -211,10 +312,15 @@ def fake_products_data(raw_dir):
             (300, "o", 15, 40),
             (23, "z", 25, 50),
         ],
-        columns=["product_id", "product_name", "aisle_id", "department_id"],
+        [
+            "product_id",
+            "product_name",
+            "aisle_id",
+            "department_id",
+        ],
     )
-    product_path = raw_dir / "products.csv"
-    products.to_csv(product_path, index=False)
+    product_path = raw_dir / "products"
+    write_parquet(product_path, products)
     return raw_dir
 
 

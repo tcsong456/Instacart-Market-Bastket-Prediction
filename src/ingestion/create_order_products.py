@@ -2,80 +2,30 @@ import logging
 import argparse
 from pyspark.sql import SparkSession, DataFrame
 from src.common.spark import create_spark_session
-from src.common.io import read_csv, write_parquet
+from src.common.io import read_parquet, write_parquet
 from src.common.cleaning import fillna_and_cast
-from src.common.utils import gcs_join
-from pyspark.sql.types import (
-    StructField,
-    StructType,
-    ByteType,
-    ShortType,
-    IntegerType,
-    StringType,
-    DoubleType,
-)
+from src.common.utils import gcs_join, partition_logging
 
 
 logger = logging.getLogger(__name__)
 
 
-ORDER_PRODUCTS_SCHEMA = StructType(
-    [
-        StructField("order_id", IntegerType(), False),
-        StructField("product_id", IntegerType(), False),
-        StructField("add_to_cart_order", ShortType(), False),
-        StructField("reordered", ByteType(), False),
-    ]
-)
-
-
-ORDERS_SCHEMA = StructType(
-    [
-        StructField("order_id", IntegerType(), False),
-        StructField("user_id", IntegerType(), False),
-        StructField("eval_set", StringType(), False),
-        StructField("order_number", ByteType(), False),
-        StructField("order_dow", ByteType(), False),
-        StructField("order_hour_of_day", ByteType(), False),
-        StructField("days_since_prior_order", DoubleType(), True),
-    ]
-)
-
-
-PRODUCTS_SCHEMA = StructType(
-    [
-        StructField("product_id", IntegerType(), False),
-        StructField("product_name", StringType(), False),
-        StructField("aisle_id", ShortType(), False),
-        StructField("department_id", ByteType(), False),
-    ]
-)
-
-
 NULL_COLS = ["days_since_prior_order"]
 
 
-def load_csv_data(
+def load_parquet_data(
     path_dir: str, spark: SparkSession
 ) -> tuple[DataFrame, DataFrame, DataFrame, DataFrame]:
-    orders = read_csv(
-        path=gcs_join(path_dir, "orders.csv"), spark=spark, schema=ORDERS_SCHEMA
+    orders = read_parquet(path=gcs_join(path_dir, "orders"), spark=spark)
+
+    products = read_parquet(path=gcs_join(path_dir, "products"), spark=spark)
+
+    orders_prior = read_parquet(
+        path=gcs_join(path_dir, "order_products__prior"), spark=spark
     )
 
-    products = read_csv(
-        path=gcs_join(path_dir, "products.csv"), spark=spark, schema=PRODUCTS_SCHEMA
-    )
-
-    orders_prior = read_csv(
-        path=gcs_join(path_dir, "order_products__prior.csv"),
-        spark=spark,
-        schema=ORDER_PRODUCTS_SCHEMA,
-    )
-
-    orders_train = read_csv(
-        path=gcs_join(path_dir, "order_products__train.csv"),
-        spark=spark,
-        schema=ORDER_PRODUCTS_SCHEMA,
+    orders_train = read_parquet(
+        path=gcs_join(path_dir, "order_products__train"), spark=spark
     )
     return orders, products, orders_prior, orders_train
 
@@ -115,8 +65,10 @@ def fill_nans(df: DataFrame, null_columns: list[str]) -> DataFrame:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--path", required=True)
+    parser.add_argument("--input-dir", required=True)
+    parser.add_argument("--output-dir", required=True)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--log-partition", action="store_true")
     return parser.parse_args()
 
 
@@ -131,12 +83,19 @@ def validate_join_counts(joined_df: DataFrame, order_products: DataFrame) -> Non
         )
 
 
-def build_order_products(spark: SparkSession, path: str, debug: bool = False) -> None:
+def build_order_products(
+    spark: SparkSession,
+    input_dir: str,
+    output_dir: str,
+    debug: bool = False,
+    log_partition: bool = False,
+) -> None:
     """
     Args:
         spark: Active Spark session
         path: The directory to download raw instacart datasets
         debug: Whether to display metadata about the contructed datasets
+        log_partition: Whether to display spark partition infomation
     Returns:
         A dataframe that contains full information for per user-order including
         features such as all products inside each order well their purchase order,
@@ -145,23 +104,32 @@ def build_order_products(spark: SparkSession, path: str, debug: bool = False) ->
 
     logging.basicConfig(level=logging.INFO)
 
-    orders, products, order_prior, order_train = load_csv_data(
-        spark=spark, path_dir=path
+    orders, products, order_prior, order_train = load_parquet_data(
+        spark=spark, path_dir=input_dir
     )
 
     order_products = orders_prior_train_join(order_prior, order_train)
     df = full_join(order_products, orders, products)
-    validate_join_counts(df, order_products)
-
     if debug:
+        validate_join_counts(df, order_products)
         log_info(order_products, order_prior, order_train, df)
 
     df = fill_nans(df, NULL_COLS)
 
-    write_parquet(path=gcs_join(path, "order_products"), df=df)
+    if log_partition:
+        partition_logging(logger, df)
+
+    write_parquet(path=gcs_join(output_dir, "order_products"), df=df)
 
 
 if __name__ == "__main__":
     args = parse_args()
     spark = create_spark_session("instacart-basket")
-    build_order_products(spark=spark, path=args.path, debug=args.debug)
+    build_order_products(
+        spark=spark,
+        input_dir=args.input_dir,
+        output_dir=args.output_dir,
+        debug=args.debug,
+        log_partition=args.log_partition,
+    )
+    spark.stop()

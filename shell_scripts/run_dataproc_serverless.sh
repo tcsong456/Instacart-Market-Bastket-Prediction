@@ -1,7 +1,9 @@
-gcloud storage rsync -r data/raw gs://instacart-data-8f061ed7/raw
-gcloud storage ls gs://instacart-data-8f061ed7/raw
+gcloud storage rsync -r data/raw gs://instacart-raw-8f061ed7/raw
+gcloud storage ls gs://instacart-raw-8f061ed7/raw
 
-python -m pytest tests/unit_test/test_create_sample_dataset.py
+python -m pytest \
+    tests/unit_test/test_create_sample_dataset.py \
+    tests/integration_test/test_create_sample_dataset_pipeline.py
 python -m src.ingestion.create_sample_dataset \
     --raw-dir data/raw \
     --sample-dir data/sample \
@@ -9,28 +11,44 @@ python -m src.ingestion.create_sample_dataset \
     --seed 7872 \
     --sample-n 500
 
-gcloud storage rsync -r data/sample gs://instacart-data-8f061ed7/sample
-gcloud storage ls gs://instacart-data-8f061ed7/sample
+gcloud storage rsync -r data/sample gs://instacart-raw-8f061ed7/sample
+gcloud storage ls gs://instacart-raw-8f061ed7/sample
 
+python -m pytest tests/integration_test/test_create_bronze_datasets_pipeline.py
 python -m zipfile -c src.zip src
-gcloud storage cp src.zip gs://instacart-dataproc-staging-8f061ed7/packages/src.zip
-gcloud storage cp src/ingestion/create_order_products.py gs://instacart-dataproc-staging-8f061ed7/jobs/
-
-gcloud dataproc batches submit pyspark \
-    gs://instacart-dataproc-staging-8f061ed7/jobs/create_order_products.py \
+gcloud dataproc jobs submit pyspark \
+    src/ingestion/create_bronze_datasets.py \
+    --cluster=instacart-dataproc-cluster-8f061ed7 \
     --region=europe-west1 \
-    --service-account=dataproc-etl-sa@instacart-basket.iam.gserviceaccount.com \
-    --py-files=gs://instacart-dataproc-staging-8f061ed7/packages/src.zip \
+    --py-files=src.zip \
     -- \
-    --path=gs://instacart-data-8f061ed7/raw \
-    --debug
+    --input-dir gs://instacart-raw-8f061ed7/raw \
+    --output-dir gs://instacart-bronze-8f061ed7/raw
 
-gcloud storage cp src/ingestion/create_user_data.py gs://instacart-dataproc-staging-8f061ed7/jobs/
-gcloud dataproc batches submit pyspark \
-    gs://instacart-dataproc-staging-8f061ed7/jobs/create_user_data.py \
+gcloud dataproc jobs submit pyspark \
+    src/ingestion/create_order_products.py \
+    --cluster=instacart-dataproc-cluster-8f061ed7 \
     --region=europe-west1 \
-    --service-account=dataproc-etl-sa@instacart-basket.iam.gserviceaccount.com \
-    --py-files=gs://instacart-dataproc-staging-8f061ed7/packages/src.zip \
+    --py-files=src.zip \
     -- \
-    --input-dir=gs://instacart-data-8f061ed7/raw/order_products \
-    --output-dir=gs://instacart-curated-data-8f061ed7/user_data
+    --input-dir=gs://instacart-bronze-8f061ed7/raw \
+    --output-dir=gs://instacart-silver-8f061ed7/raw
+
+gcloud dataproc jobs submit pyspark \
+    src/ingestion/create_user_data.py \
+    --cluster=instacart-dataproc-cluster-8f061ed7 \
+    --region=europe-west1 \
+    --py-files=src.zip \
+    -- \
+    --input-dir=gs://instacart-silver-8f061ed7/raw/order_products \
+    --output-dir=gs://instacart-silver-8f061ed7/raw/user_data
+
+gcloud dataproc jobs submit pyspark \
+    src/ingestion/create_product_history_data.py \
+    --cluster=instacart-dataproc-cluster-8f061ed7 \
+    --region=europe-west1 \
+    --py-files=src.zip \
+    -- \
+    --input-dir=gs://instacart-silver-8f061ed7/raw \
+    --raw-dir=gs://instacart-bronze-8f061ed7/raw \
+    --output-dir=gs://instacart-silver-8f061ed7/raw/product_history_data

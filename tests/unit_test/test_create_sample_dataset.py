@@ -9,21 +9,21 @@ from src.ingestion.create_sample_dataset import (
 )
 
 
-def test_validate_inputs_missing_files_raises(tiny_fake_testset) -> None:
-    input_dir = tiny_fake_testset / "data"
+def test_validate_inputs_missing_files_raises(tiny_fake_testset_csv) -> None:
+    input_dir = tiny_fake_testset_csv / "data"
     input_dir.mkdir()
 
     with pytest.raises(FileNotFoundError, match="Missing required input files in"):
         validate_inputs(input_dir, sample_n=2)
 
 
-def test_sample_n_larger_than_unique_users(tiny_fake_testset) -> None:
+def test_sample_n_larger_than_unique_users(tiny_fake_testset_csv) -> None:
     with pytest.raises(ValueError, match="greater than number of unique users "):
-        validate_inputs(tiny_fake_testset, sample_n=999)
+        validate_inputs(tiny_fake_testset_csv, sample_n=999)
 
 
-def test_copy_lookup_files(tiny_fake_testset, tmp_path):
-    src_dir = tiny_fake_testset
+def test_copy_lookup_files(tiny_fake_testset_csv, tmp_path):
+    src_dir = tiny_fake_testset_csv
     dst_dir = tmp_path / "sample"
     dst_dir.mkdir()
 
@@ -34,15 +34,15 @@ def test_copy_lookup_files(tiny_fake_testset, tmp_path):
     for file in files:
         assert (dst_dir / file).exists()
 
-    src_products = pd.read_csv(tiny_fake_testset / "products.csv")
+    src_products = pd.read_csv(tiny_fake_testset_csv / "products.csv")
     dst_products = pd.read_csv(dst_dir / "products.csv")
     pd.testing.assert_frame_equal(
         src_products, dst_products, check_exact=False, rtol=1e-6
     )
 
 
-def test_same_seed_same_users(tiny_fake_testset):
-    orders = pd.read_csv(tiny_fake_testset / "orders.csv")
+def test_same_seed_same_users(tiny_fake_testset_csv):
+    orders = pd.read_csv(tiny_fake_testset_csv / "orders.csv")
 
     user1 = sample_users(orders, 2, 19810)
     user2 = sample_users(orders, 2, 19810)
@@ -50,24 +50,24 @@ def test_same_seed_same_users(tiny_fake_testset):
     assert user1.tolist() == user2.tolist()
 
 
-def test_sample_users_are_unique(tiny_fake_testset):
-    orders = pd.read_csv(tiny_fake_testset / "orders.csv")
+def test_sample_users_are_unique(tiny_fake_testset_csv):
+    orders = pd.read_csv(tiny_fake_testset_csv / "orders.csv")
 
     sampled_users = sample_users(orders, 3, 19810)
 
     assert sampled_users.is_unique
 
 
-def test_sampled_users_count(tiny_fake_testset):
-    orders = pd.read_csv(tiny_fake_testset / "orders.csv")
+def test_sampled_users_count(tiny_fake_testset_csv):
+    orders = pd.read_csv(tiny_fake_testset_csv / "orders.csv")
 
     sampled_users = sample_users(orders, 3, 19810)
 
     assert sampled_users.nunique() == 3
 
 
-def test_filter_orders_contain_only_sampled_users(tiny_fake_testset):
-    orders = pd.read_csv(tiny_fake_testset / "orders.csv")
+def test_filter_orders_contain_only_sampled_users(tiny_fake_testset_csv):
+    orders = pd.read_csv(tiny_fake_testset_csv / "orders.csv")
     sampled_users = pd.Series([10, 30])
     filtered_order_users = filter_orders_by_users(orders, sampled_users)
 
@@ -75,13 +75,13 @@ def test_filter_orders_contain_only_sampled_users(tiny_fake_testset):
     assert filtered_order_users["order_id"].tolist() == [1, 2, 5, 6]
 
 
-def test_filter_orders_contain_orders_correctly(tiny_fake_testset, tmp_path):
+def test_filter_orders_contain_orders_correctly(tiny_fake_testset_csv, tmp_path):
     order_ids = {1, 5}
     sample_dir = tmp_path / "sample"
     sample_dir.mkdir()
 
     write_filtered_order_products(
-        raw_dir=tiny_fake_testset,
+        raw_dir=tiny_fake_testset_csv,
         sample_dir=sample_dir,
         chunksize=1,
         filename="order_products__prior.csv",
@@ -92,12 +92,12 @@ def test_filter_orders_contain_orders_correctly(tiny_fake_testset, tmp_path):
     assert set(filtered_order_products["order_id"]) == order_ids
 
 
-def test_filtered_orders_header_only_once(tiny_fake_testset, tmp_path):
+def test_filtered_orders_header_only_once(tiny_fake_testset_csv, tmp_path):
     sample_dir = tmp_path / "sample"
     sample_dir.mkdir()
 
     write_filtered_order_products(
-        raw_dir=tiny_fake_testset,
+        raw_dir=tiny_fake_testset_csv,
         sample_dir=sample_dir,
         chunksize=1,
         filename="order_products__prior.csv",
@@ -112,12 +112,12 @@ def test_filtered_orders_header_only_once(tiny_fake_testset, tmp_path):
     assert lines.count(header) == 1
 
 
-def test_filtered_orders_produce_no_matching_results(tiny_fake_testset, tmp_path):
+def test_filtered_orders_produce_no_matching_results(tiny_fake_testset_csv, tmp_path):
     sample_dir = tmp_path / "sample"
     sample_dir.mkdir()
 
     write_filtered_order_products(
-        raw_dir=tiny_fake_testset,
+        raw_dir=tiny_fake_testset_csv,
         sample_dir=sample_dir,
         chunksize=1,
         filename="order_products__prior.csv",

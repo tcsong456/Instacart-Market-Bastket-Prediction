@@ -1,14 +1,20 @@
+import logging
 import argparse
 from pyspark.sql import functions as F
 from pyspark.sql import SparkSession, DataFrame
 from src.common.io import read_parquet, write_parquet
 from src.common.spark import create_spark_session
+from src.common.utils import partition_logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input-dir", required=True)
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--log-partition", action="store_true")
     return parser.parse_args()
 
 
@@ -144,11 +150,25 @@ def build_user_level_data(df: DataFrame) -> DataFrame:
     return user_data
 
 
-def build_user_data(spark: SparkSession, input_dir: str, output_dir: str) -> None:
+def build_user_data(
+    spark: SparkSession, input_dir: str, output_dir: str, log_partition: bool = False
+) -> None:
+    logging.basicConfig(level=logging.INFO)
+
     df = read_parquet(input_dir, spark)
 
     order_group_data = build_order_level_data(df)
     user_group_data = build_user_level_data(order_group_data)
+    if log_partition:
+        logger.info("=" * 80)
+        logger.info("The partition distribution for Dataset: order_group_data")
+        partition_logging(logger, order_group_data)
+
+        logger.info("=" * 80)
+        logger.info(
+            "The partition distribution for Dataset: user_group_data",
+        )
+        partition_logging(logger, user_group_data)
 
     write_parquet(output_dir, user_group_data)
 
@@ -156,5 +176,5 @@ def build_user_data(spark: SparkSession, input_dir: str, output_dir: str) -> Non
 if __name__ == "__main__":
     args = parse_args()
     spark = create_spark_session("instacart-basket")
-    build_user_data(spark, args.input_dir, args.output_dir)
+    build_user_data(spark, args.input_dir, args.output_dir, args.log_partition)
     spark.stop()
