@@ -9,7 +9,6 @@ def assert_schema_matches(
     expected_fields = expected_schema.fields
 
     assert [f.name for f in actual_fields] == [f.name for f in expected_fields]
-    # assert [f.dataType for f in actual_fields] == [f.dataType for f in expected_fields]
 
     if check_nullable:
         assert [f.nullable for f in actual_fields] == [

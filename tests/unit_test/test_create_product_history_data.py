@@ -259,6 +259,8 @@ def test_build_each_product_in_order_history(
     )
     expected_df = expected_df.select(SELECTED_COLUMNS)
 
+    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
 
 
