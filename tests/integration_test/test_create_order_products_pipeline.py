@@ -2,7 +2,7 @@ from pathlib import Path
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 from src.ingestion.create_order_products import (
-    load_csv_data,
+    load_parquet_data,
     orders_prior_train_join,
     full_join,
     fill_nans,
@@ -11,9 +11,11 @@ from src.ingestion.create_order_products import (
 )
 
 
-def test_create_order_products(spark: SparkSession, tiny_fake_testset: Path) -> None:
-    orders, products, order_prior, order_train = load_csv_data(
-        spark=spark, path_dir=tiny_fake_testset
+def test_create_order_products(
+    spark: SparkSession, tiny_fake_testset_parquet: Path
+) -> None:
+    orders, products, order_prior, order_train = load_parquet_data(
+        spark=spark, path_dir=tiny_fake_testset_parquet
     )
 
     order_products = orders_prior_train_join(order_prior, order_train)

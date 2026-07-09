@@ -2,11 +2,11 @@ import pandas as pd
 from src.ingestion.create_sample_dataset import main
 
 
-def test_create_sample_dataset_pipeline(tiny_fake_testset, tmp_path):
+def test_create_sample_dataset_pipeline(tiny_fake_testset_csv, tmp_path):
     sample_dir = tmp_path / "sample"
 
     main(
-        raw_dir=tiny_fake_testset,
+        raw_dir=tiny_fake_testset_csv,
         sample_dir=sample_dir,
         chunk_size=2,
         seed=7827,
