@@ -332,5 +332,5 @@ def test_build_each_reorder_history(spark, fake_parse_seq_data, fake_filtered_or
         schema=expected_schema,
     )
     expected_reorders = expected_reorders.select(SELECTED_COLUMNS)
-
+    actual_reorders.printSchema()
     assert_spark_df_equal(actual_reorders, expected_reorders, ["user_id"])
