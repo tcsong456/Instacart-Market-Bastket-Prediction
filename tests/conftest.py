@@ -83,7 +83,7 @@ def tiny_fake_testset_csv(raw_dir):
 
 
 @pytest.fixture
-def tiny_fake_testset_parquet(raw_dir):
+def tiny_fake_testset_parquet(spark, raw_dir):
     orders = spark.createDataFrame(
         [
             (1, 10, "prior", 1, 1, 10, None),
@@ -260,24 +260,30 @@ def fake_filtered_orders(spark, raw_dir):
 
 
 @pytest.fixture
-def fake_orders(raw_dir):
-    orders = pd.DataFrame(
+def fake_orders(spark, raw_dir):
+    orders = spark.createDataFrame(
         [
             (10, 1, "train", 3, 23),
             (20, 2, "test", 0, 11),
             (30, 3, "prior", 1, 7),
             (40, 4, "prior", 5, 1),
         ],
-        columns=["user_id", "order_id", "eval_set", "order_dow", "order_hour_of_day"],
+        [
+            "user_id",
+            "order_id",
+            "eval_set",
+            "order_dow",
+            "order_hour_of_day",
+        ],
     )
-    order_path = raw_dir / "orders.csv"
-    orders.to_csv(order_path, index=False)
+    order_path = raw_dir / "orders"
+    write_parquet(order_path, orders)
     return raw_dir
 
 
 @pytest.fixture
 def fake_products_data(raw_dir):
-    products = pd.DataFrame(
+    products = spark.createDataFrame(
         [
             (1, "b", 5, 10),
             (2, "c", 10, 10),
@@ -294,10 +300,15 @@ def fake_products_data(raw_dir):
             (300, "o", 15, 40),
             (23, "z", 25, 50),
         ],
-        columns=["product_id", "product_name", "aisle_id", "department_id"],
+        [
+            "product_id",
+            "product_name",
+            "aisle_id",
+            "department_id",
+        ],
     )
-    product_path = raw_dir / "products.csv"
-    products.to_csv(product_path, index=False)
+    product_path = raw_dir / "products"
+    write_parquet(product_path, products)
     return raw_dir
 
 
