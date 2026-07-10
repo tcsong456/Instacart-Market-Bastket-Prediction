@@ -15,7 +15,7 @@ from pyspark.sql.types import (
 def test_parse_seq(fake_user_data, spark):
     COLUMNS = [
         "user_id",
-        "aislle_raw",
+        "aisle_raw",
         "aisle_prev",
         "aisle_next",
         "aisle_all",
