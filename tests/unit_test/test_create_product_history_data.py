@@ -2,7 +2,7 @@
 from pyspark.sql import Row
 from src.common.io import read_csv, read_parquet
 from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
-from src.common.utils import assert_spark_df_equal
+from tests.helper import assert_spark_df_equal
 from src.ingestion.create_product_history_data import (
     parse_seq,
     filtered_orders,
