@@ -1,8 +1,12 @@
+import logging
 import argparse
-from src.common.utils import gcs_join
+from src.common.utils import gcs_join, partition_distribution
 from src.common.spark import create_spark_session
 from src.common.io import read_parquet, write_parquet
 from pyspark.sql import DataFrame, functions as F, SparkSession
+
+
+logger = logging.getLogger(__name__)
 
 
 SELECTED_COLUMNS = [
@@ -296,6 +300,7 @@ def parse_args():
     parser.add_argument("--input-dir", required=True)
     parser.add_argument("--raw-dir", required=True)
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--display-partition", action="store_true")
     return parser.parse_args()
 
 
@@ -304,6 +309,7 @@ def build_product_history_data(
     input_dir: str,
     raw_dir: str,
     output_dir: str,
+    display_partition: bool = False,
 ) -> None:
     """
     Args:
@@ -322,6 +328,15 @@ def build_product_history_data(
     )
     reorder_history = build_each_reorder_history(reorders, orders)
     product_include_none_history = product_history.unionByName(reorder_history)
+    if display_partition:
+        logging.basicConfig(level=logging.INFO)
+        logger.info("Partition distribution for product_history dataset\n")
+        partition_distribution(product_history)
+        logger.info("Partition distribution for reorder_history dataset\n")
+        partition_distribution(reorder_history)
+        logger.info("Partition distribution for unioned final dataset\n")
+        partition_distribution(product_include_none_history)
+
     write_parquet(output_dir, product_include_none_history)
 
 
@@ -333,5 +348,6 @@ if __name__ == "__main__":
         input_dir=args.input_dir,
         raw_dir=args.raw_dir,
         output_dir=args.output_dir,
+        display_partition=args.display_partition,
     )
     spark.stop()
