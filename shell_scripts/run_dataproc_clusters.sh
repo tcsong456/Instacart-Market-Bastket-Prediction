@@ -46,12 +46,22 @@ python -m zipfile -c src.zip src
 #     --input-dir=gs://instacart-silver-8f061ed7/$file/order_products \
 #     --output-dir=gs://instacart-silver-8f061ed7/$file/user_data
 
+# gcloud dataproc jobs submit pyspark \
+#     src/ingestion/create_product_history_data.py \
+#     --cluster=instacart-dataproc-cluster-8f061ed7 \
+#     --region=europe-west1 \
+#     --py-files=src.zip \
+#     -- \
+#     --input-dir=gs://instacart-silver-8f061ed7/$file \
+#     --raw-dir=gs://instacart-bronze-8f061ed7/$file \
+#     --output-dir=gs://instacart-silver-8f061ed7/$file/product_history_data
+
 gcloud dataproc jobs submit pyspark \
-    src/ingestion/create_product_history_data.py \
+    src/ingestion/create_aisle_history_data.py \
     --cluster=instacart-dataproc-cluster-8f061ed7 \
     --region=europe-west1 \
     --py-files=src.zip \
     -- \
     --input-dir=gs://instacart-silver-8f061ed7/$file \
     --raw-dir=gs://instacart-bronze-8f061ed7/$file \
-    --output-dir=gs://instacart-silver-8f061ed7/$file/product_history_data
+    --output-dir=gs://instacart-silver-8f061ed7/$file
