@@ -1,5 +1,5 @@
 from pyspark.sql import Row
-from src.common.utils import assert_spark_df_equal
+from tests.helper import assert_spark_df_equal
 from src.common.io import read_parquet
 from src.ingestion.create_product_history_data import build_product_history_data
 from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
