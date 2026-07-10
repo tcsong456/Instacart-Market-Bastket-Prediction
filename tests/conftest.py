@@ -385,7 +385,7 @@ def fake_parse_seq_data(spark):
                 "products_all": [[1, 2, 3], [4, 10], [5, 323, 1, 12]],
                 "reorders_all": [[0, 0, 0], [0, 0], [0, 0, 1, 0]],
                 "aisle_set": [5, 10, 15, 10, 5, 20, 15, 10],
-                "aisle_all": [[5, 10, 15], [10, 20], [5, 10, 5, 15], [5]],
+                "aisle_all": [[5, 10, 15], [10, 20], [5, 10, 5, 15]],
                 "next_products_set": [5],
                 "next_reorders_int": [1],
                 "order_dows": "5 0 5 1",
