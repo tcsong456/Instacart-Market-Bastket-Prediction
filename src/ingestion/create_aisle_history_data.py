@@ -22,6 +22,19 @@ SELECTED_COLUMNS = [
 
 
 def parse_seq(df: DataFrame) -> DataFrame:
+    """
+    Parse sequential aisle history strings into structured array features.
+    The input ``aisle_ids`` column contains a space-separated sequence of
+    orders, where each order is represented by underscore-separated aisle
+    IDs. This function converts the raw string representation into array-based
+    features for downstream feature engineering.
+
+    Args:
+        df: Input DataFrame containing an ``aisle_ids`` column.
+
+    Returns:
+        DataFrame with the parsed aisle history features appended.
+    """
     df = (
         df.withColumn("aisle_raw", F.split("aisle_ids", " "))
         .withColumn("aisle_prev", F.slice("aisle_raw", 1, F.size("aisle_raw") - 1))
@@ -59,6 +72,22 @@ def parse_seq(df: DataFrame) -> DataFrame:
 
 
 def build_aisle_history_data(df: DataFrame):
+    """
+    Generate per-aisle historical features from parsed aisle histories.
+    Expands each user's historical aisle set into one row per aisle and
+    constructs sequential features describing the user's interaction with
+    that aisle across previous orders.
+
+    Args:
+        df: Input DataFrame produced by ``parse_seq()``, containing the
+            parsed aisle history columns (``aisle_all``, ``aisle_set``,
+            etc.).
+
+    Returns:
+        DataFrame with one row per user-aisle pair and the corresponding
+        historical aisle features appended.
+    """
+
     df = (
         df.withColumn(
             "aisle_history_size",
