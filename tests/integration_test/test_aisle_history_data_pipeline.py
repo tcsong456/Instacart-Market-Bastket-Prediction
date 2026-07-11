@@ -9,7 +9,7 @@ def test_aisle_history_data_pipeline(
     spark, fake_user_data, fake_products_data, tmp_path
 ):
     output_dir = tmp_path / "curated"
-    output_dir.mkdir()
+    output_dir.mkdir(parents=True, exist_ok=True)
     build_create_aisle_history_data(
         spark=spark,
         input_dir=fake_user_data,
