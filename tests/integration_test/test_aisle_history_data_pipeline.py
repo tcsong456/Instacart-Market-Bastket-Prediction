@@ -3,6 +3,7 @@ from src.common.io import read_parquet
 from src.common.utils import gcs_join
 from tests.helper import assert_spark_df_equal
 from src.ingestion.create_aisle_history_data import build_create_aisle_history_data
+from pyspark.sql.types import StructField, StructType, StringType, LongType, IntegerType
 
 
 def test_aisle_history_data_pipeline(
@@ -33,6 +34,22 @@ def test_aisle_history_data_pipeline(
         days_since_prior_orders="10 19 22 6",
         order_numbers="3 4 5 6",
         eval_set="test",
+    )
+    expected_schmae = StructType(
+        [
+            StructType("user_id", LongType(), True),
+            StructType("aisle_id", IntegerType(), True),
+            StructType("department_id", LongType(), True),
+            StructType("is_ordered_history", StringType(), True),
+            StructType("position_in_order", StringType(), True),
+            StructType("num_products_from_aisle", StringType(), True),
+            StructType("aisle_history_size", StringType(), True),
+            StructType("order_dows", StringType(), True),
+            StructType("order_hours", StringType(), True),
+            StructType("days_since_prior_orders", StringType(), True),
+            StructType("order_numbers", StringType(), True),
+            StructType("eval_set", StringType(), True),
+        ]
     )
     expected_df = spark.createDataFrame(
         [
@@ -99,7 +116,8 @@ def test_aisle_history_data_pipeline(
                 num_products_from_aisle="0 0 2",
                 **common_cols_20,
             ),
-        ]
+        ],
+        schema=expected_schmae,
     )
-    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "aisle_id"])
