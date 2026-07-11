@@ -21,8 +21,8 @@ def test_build_word_idx(spark):
 
     expected_schma = StructType(
         [
-            StructField("word", StringType(), True),
-            StructField("word_idx", IntegerType(), True),
+            StructField("word", StringType(), False),
+            StructField("word_idx", IntegerType(), False),
         ]
     )
     expected_df = spark.createDataFrame(
