@@ -37,18 +37,18 @@ def test_aisle_history_data_pipeline(
     )
     expected_schmae = StructType(
         [
-            StructType("user_id", LongType(), True),
-            StructType("aisle_id", IntegerType(), True),
-            StructType("department_id", LongType(), True),
-            StructType("is_ordered_history", StringType(), True),
-            StructType("position_in_order", StringType(), True),
-            StructType("num_products_from_aisle", StringType(), True),
-            StructType("aisle_history_size", StringType(), True),
-            StructType("order_dows", StringType(), True),
-            StructType("order_hours", StringType(), True),
-            StructType("days_since_prior_orders", StringType(), True),
-            StructType("order_numbers", StringType(), True),
-            StructType("eval_set", StringType(), True),
+            StructField("user_id", LongType(), True),
+            StructField("aisle_id", IntegerType(), True),
+            StructField("department_id", LongType(), True),
+            StructField("is_ordered_history", StringType(), True),
+            StructField("position_in_order", StringType(), True),
+            StructField("num_products_from_aisle", StringType(), True),
+            StructField("aisle_history_size", StringType(), True),
+            StructField("order_dows", StringType(), True),
+            StructField("order_hours", StringType(), True),
+            StructField("days_since_prior_orders", StringType(), True),
+            StructField("order_numbers", StringType(), True),
+            StructField("eval_set", StringType(), True),
         ]
     )
     expected_df = spark.createDataFrame(
