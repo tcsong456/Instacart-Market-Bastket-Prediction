@@ -121,7 +121,7 @@ def test_build_each_product_in_order_history(
                 position_in_order_history="2 0 0",
                 product_name="c",
                 aisle_id=10,
-                department_id=10,
+                department_id=20,
                 **common_cols_1,
             ),
             Row(
@@ -171,7 +171,7 @@ def test_build_each_product_in_order_history(
                 position_in_order_history="0 0 4",
                 product_name="i",
                 aisle_id=15,
-                department_id=20,
+                department_id=30,
                 **common_cols_1,
             ),
             Row(
@@ -201,7 +201,7 @@ def test_build_each_product_in_order_history(
                 position_in_order_history="1 0 5",
                 product_name="h",
                 aisle_id=5,
-                department_id=30,
+                department_id=10,
                 **common_cols_2,
             ),
             Row(
@@ -211,7 +211,7 @@ def test_build_each_product_in_order_history(
                 position_in_order_history="0 0 1",
                 product_name="i",
                 aisle_id=15,
-                department_id=20,
+                department_id=30,
                 **common_cols_2,
             ),
             Row(
@@ -221,7 +221,7 @@ def test_build_each_product_in_order_history(
                 position_in_order_history="0 0 2",
                 product_name="l",
                 aisle_id=20,
-                department_id=30,
+                department_id=40,
                 **common_cols_2,
             ),
             Row(
@@ -241,7 +241,7 @@ def test_build_each_product_in_order_history(
                 position_in_order_history="0 1 4",
                 product_name="o",
                 aisle_id=15,
-                department_id=40,
+                department_id=30,
                 **common_cols_2,
             ),
             Row(
