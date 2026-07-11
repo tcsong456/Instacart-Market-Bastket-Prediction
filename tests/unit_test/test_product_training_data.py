@@ -1,6 +1,7 @@
 from pyspark.sql import Row
 from tests.helper import assert_spark_df_equal
 from src.ingestion.prepare_product_training_data import build_word_idx
+from pyspark.sql.types import StructField, StructType, IntegerType, StringType
 
 
 def test_build_word_idx(spark):
@@ -18,14 +19,20 @@ def test_build_word_idx(spark):
 
     actual_df = build_word_idx(products, 2)
 
+    expected_schma = StructType(
+        [
+            StructField("word", StringType(), True),
+            StructField("word_idx", IntegerType(), True),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(word="bread", word_idx=0),
             Row(word="strawberry", word_idx=0),
             Row(word="cheeze", word_idx=1),
             Row(word="garlic", word_idx=2),
-        ]
+        ],
+        schema=expected_schma,
     )
 
-    actual_df.printSchema()
     assert_spark_df_equal(actual_df, expected_df, ["word_idx", "word"])
