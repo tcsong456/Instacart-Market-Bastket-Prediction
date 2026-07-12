@@ -47,6 +47,15 @@ def build_word_idx(products: DataFrame, min_word_freq: int = 5) -> DataFrame:
 
 
 def encode_product_names(products: DataFrame, word_index: DataFrame) -> DataFrame:
+    """
+    Encode each product name while preserving the original word order.
+
+    Returns:
+        DataFrame with columns:
+            product_id
+            product_name_encoded: array<int>
+    """
+
     clean_products = products.select(
         F.col("product_id").cast("int"),
         F.trim(F.lower(F.col("product_name"))).alias("cleaned_product_name"),
@@ -93,6 +102,28 @@ def encode_product_names(products: DataFrame, word_index: DataFrame) -> DataFram
     )
 
     return result
+
+
+def pad_array(
+    array_column: F.Column,
+    max_length: int,
+) -> tuple[F.Column, F.Column]:
+    """
+    Truncate and right-pad an integer array with zeros.
+
+    Returns:
+        padded_array
+        original_length_after_truncation
+    """
+
+    truncated_array = F.slice(array_column, 1, max_length)
+    seq_length = F.size(truncated_array).cast("int")
+    padding_len = max_length - seq_length
+    padded_array = F.concat(
+        truncated_array, F.array_repeat(F.lit(0).cast("int"), padding_len)
+    )
+
+    return padded_array, seq_length
 
 
 def parse_args():
