@@ -188,13 +188,13 @@ def build_product_seq_data(
     )
 
     HISTORY_COLUMNS = [
-        "index_in_order_history",
-        "order_dow_history",
-        "order_hour_history",
-        "days_since_prior_order_history",
-        "order_size_history",
-        "reorder_size_history",
-        "order_number_history",
+        "position_in_order_history",
+        "order_dows",
+        "order_hours",
+        "days_since_prior_orders",
+        "history_order_size",
+        "history_reorder_size",
+        "order_numbers",
     ]
 
     word_index = build_word_idx(products, min_word_freq)
