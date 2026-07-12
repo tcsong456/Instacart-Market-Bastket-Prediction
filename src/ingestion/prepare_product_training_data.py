@@ -188,7 +188,6 @@ def build_product_seq_data(
     )
 
     HISTORY_COLUMNS = [
-        "is_ordered_history",
         "index_in_order_history",
         "order_dow_history",
         "order_hour_history",
@@ -220,12 +219,16 @@ def build_product_seq_data(
         .drop("_parsed_product_name")
     )
 
+    df = df.withColumn(
+        "_parsed_is_ordered_history", parse_string_sequence("is_ordered_history")
+    )
+    name, length = pad_array(F.col("_parsed_is_ordered_history"), encode_length)
+    df = df.withColumn("history_length", length.cast("int"))
+
     for colname in HISTORY_COLUMNS:
         parsed_col = parse_string_sequence(colname)
         name, length = pad_array(parsed_col, encode_length)
         df = df.withColumn(colname, name)
-        if colname == "is_ordered_history":
-            df = df.withColumn("history_length", length.cast("int"))
 
     df = df.select(
         "user_id",
