@@ -5,9 +5,20 @@ from src.common.spark import create_spark_session
 from pyspark.sql import functions as F, DataFrame, Window
 
 
-def build_word_idx(df: DataFrame, min_word_freq: int = 5):
+def build_word_idx(products: DataFrame, min_word_freq: int = 5) -> DataFrame:
+    """
+    Build a word-to-index lookup table from product names.
+    Words appearing fewer than `min_word_frequency` times receive index 0.
+    Frequent words receive IDs starting from 1.
+
+    Returns:
+        DataFrame with columns:
+            word: string
+            word_idx: integer
+    """
+
     word_counts = (
-        df.select(
+        products.select(
             F.explode(F.split(F.trim(F.lower(F.col("product_name"))), r"\s+")).alias(
                 "word"
             )
@@ -17,7 +28,7 @@ def build_word_idx(df: DataFrame, min_word_freq: int = 5):
         .agg(F.count("*").alias("word_count"))
     )
 
-    frquent_window = Window.orderBy("word_count")
+    frquent_window = Window.orderBy(F.col("word_count").desc(), F.col("word").asc())
     frquent_words = (
         word_counts.filter(F.col("word_count") >= min_word_freq)
         .withColumn("word_idx", F.row_number().over(frquent_window).cast("int"))
@@ -29,9 +40,59 @@ def build_word_idx(df: DataFrame, min_word_freq: int = 5):
         .withColumn("word_idx", F.lit(0).cast("int").alias("word_idx"))
         .select("word", "word_idx")
     )
-    words = frquent_words.unionByName(rare_words)
+    word_index = frquent_words.unionByName(rare_words)
+    # print(word_index.count())
 
-    return words
+    return word_index
+
+
+def encode_product_names(products: DataFrame, word_index: DataFrame) -> DataFrame:
+    clean_products = products.select(
+        F.col("product_id").cast("int"),
+        F.trim(F.lower(F.col("product_name"))).alias("cleaned_product_name"),
+    )
+
+    product_tokens = (
+        clean_products.select(
+            "product_id",
+            F.posexplode(F.split("cleaned_product_name", r"\s+")).alias(
+                "word_pos", "word"
+            ),
+        )
+        .filter(F.col("word") != "")
+        .join(word_index, how="left", on="word")
+        .groupby("product_id")
+        .agg(
+            F.sort_array(F.collect_list(F.struct("word_pos", "word_idx"))).alias(
+                "encoded_words"
+            )
+        )
+        .select(
+            "product_id",
+            F.expr(
+                """
+                    array_join(
+                        transform(
+                            encoded_words,
+                            x -> x.word_idx
+                        ),
+                    ' '
+                    )
+                """
+            ).alias("product_name_encoded"),
+        )
+    )
+
+    result = (
+        clean_products.select("product_id")
+        .join(product_tokens, how="left", on="product_id")
+        .withColumn(
+            "product_name_encoded",
+            F.coalesce(F.col("product_name_encoded"), F.lit("0")),
+        )
+    )
+
+    return result
 
 
 def parse_args():
@@ -46,5 +107,6 @@ if __name__ == "__main__":
     args = parse_args()
     spark = create_spark_session("product_training_data")
     products = read_parquet(gcs_join(args.input_dir, "products"), spark)
-    df = build_word_idx(products, args.min_word_freq)
+    word_index = build_word_idx(products, args.min_word_freq)
+    df = encode_product_names(products, word_index)
     df.show(20, truncate=False)
