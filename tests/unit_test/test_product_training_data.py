@@ -147,7 +147,7 @@ def test_pad_array(spark, input_array, max_length, expected_array, expected_leng
     ],
 )
 def test_parse_string_sequence(spark, input_string, expected_array):
-    schema = StructType([StructType("sequence", StringType(), True)])
+    schema = StructType([StructField("sequence", StringType(), True)])
 
     df = spark.createDataFrame([(input_string,)], schema=schema)
 
