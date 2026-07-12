@@ -166,6 +166,22 @@ def build_product_seq_data(
     product_name_length: int = 50,
     encode_length: int = 50,
 ) -> None:
+    """
+    Build the model-ready product sequence dataset.
+    Loads product metadata and product history features, encodes product names
+    as sequences of word indices, pads all variable-length sequence features to
+    fixed lengths, and writes the resulting dataset to Parquet.
+
+    Args:
+        spark: Active spark session
+        raw_dir: Path to the products metadata
+        input_dir: Path to product history data
+        output_dir: Path to write the built dataframe to
+        min_word_freq: Minimum number of word count to be given a word_index greater than zero
+        product_name_length: Maximum number of product words
+        encode_length: Maximum length of a concated string
+    """
+
     products = read_parquet(gcs_join(raw_dir, "products"), spark)
     product_history_data = read_parquet(
         gcs_join(input_dir, "product_history_data"), spark
@@ -185,13 +201,21 @@ def build_product_seq_data(
     word_index = build_word_idx(products, min_word_freq)
     encoded_product_name = encode_product_names(products, word_index)
 
-    df = product_history_data.join(
-        encoded_product_name, how="left", on="product_id"
-    ).withColumn("product_name_encoded", F.coalesce("product_name_encoded", F.lit("")))
-    parsed_seq = parse_string_sequence("product_name_encoded")
-    prod_name, prod_name_length = pad_array(parsed_seq, product_name_length)
-    df = df.withColumn("product_name_encoded", prod_name).withColumn(
-        "product_name_length", prod_name_length.cast("int")
+    df = (
+        product_history_data.join(encoded_product_name, how="left", on="product_id")
+        .withColumn(
+            "product_name_encoded", F.coalesce("product_name_encoded", F.lit(""))
+        )
+        .withColumn(
+            "_parsed_product_name", parse_string_sequence("product_name_encoded")
+        )
+    )
+
+    padded_product_name, prod_name_length = pad_array(
+        F.col("_parsed_product_name"), product_name_length
+    )
+    df = df.withColumn("product_name_encoded", padded_product_name).withColumn(
+        "product_name_length", prod_name_length.cast("int").drop("_parsed_product_name")
     )
 
     for colname in HISTORY_COLUMNS:
