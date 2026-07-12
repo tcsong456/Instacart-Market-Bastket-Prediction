@@ -151,7 +151,7 @@ def test_parse_string_sequence(spark, input_string, expected_array):
 
     df = spark.createDataFrame([(input_string,)], schema=schema)
 
-    seq = parse_string_sequence("sequence").alisas("parsed_seq")
+    seq = parse_string_sequence("sequence").alias("parsed_seq")
     actual_df = df.select(seq).first()
 
     assert actual_df["parsed_seq"] == expected_array
