@@ -96,7 +96,7 @@ def test_encode_product_names(spark):
             Row(product_id=28, product_name_encoded="0"),
             Row(product_id=35, product_name_encoded="0"),
         ],
-        sechema=expected_schema,
+        schema=expected_schema,
     )
 
     assert_spark_df_equal(actual_df, expected_df, ["product_id"])
