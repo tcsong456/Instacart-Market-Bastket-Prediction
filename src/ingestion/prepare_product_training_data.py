@@ -3,6 +3,7 @@ from src.common.utils import gcs_join
 from src.common.io import read_parquet
 from src.common.spark import create_spark_session
 from pyspark.sql import functions as F, DataFrame, Window
+from pyspark.sql.types import ArrayType, IntegerType
 
 
 def build_word_idx(products: DataFrame, min_word_freq: int = 5) -> DataFrame:
@@ -124,6 +125,25 @@ def pad_array(
     )
 
     return padded_array, seq_length
+
+
+def parse_string_sequence(column_name: str) -> F.Column:
+    """
+    Convert a space-separated string such as '1 0 3' into array<int>.
+
+    Null and empty strings become empty arrays.
+    """
+
+    empty_array = F.array().cast(ArrayType(IntegerType()))
+
+    return F.when(
+        F.col(column_name).isNull() | (F.trim(F.col(column_name)) == ""),
+        empty_array,
+    ).otherwise(
+        F.transform(
+            F.split(F.trim(F.col(column_name)), r"\s+"), lambda x: x.cast("int")
+        )
+    )
 
 
 def parse_args():
