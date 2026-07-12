@@ -80,6 +80,12 @@ def test_encode_product_names(spark):
 
     actual_df = encode_product_names(products, word_index)
 
+    expected_schema = StructType(
+        [
+            StructField("product_id", IntegerType(), True),
+            StructField("product_name_encoded", StringType(), False),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(product_id=7, product_name_encoded="4 6"),
@@ -89,8 +95,8 @@ def test_encode_product_names(spark):
             Row(product_id=22, product_name_encoded="1 16 3 2 14 5"),
             Row(product_id=28, product_name_encoded="0"),
             Row(product_id=35, product_name_encoded="0"),
-        ]
+        ],
+        sechema=expected_schema,
     )
 
-    actual_df.printSchema()
     assert_spark_df_equal(actual_df, expected_df, ["product_id"])
