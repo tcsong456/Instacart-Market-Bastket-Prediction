@@ -214,8 +214,10 @@ def build_product_seq_data(
     padded_product_name, prod_name_length = pad_array(
         F.col("_parsed_product_name"), product_name_length
     )
-    df = df.withColumn("product_name_encoded", padded_product_name).withColumn(
-        "product_name_length", prod_name_length.cast("int").drop("_parsed_product_name")
+    df = (
+        df.withColumn("product_name_encoded", padded_product_name)
+        .withColumn("product_name_length", prod_name_length.cast("int"))
+        .drop("_parsed_product_name")
     )
 
     for colname in HISTORY_COLUMNS:
