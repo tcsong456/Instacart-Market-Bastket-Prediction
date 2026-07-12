@@ -29,7 +29,6 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 position_in_order_history="1 5 0 0 8 0 0 0 0 4",
                 history_order_size="3 3 10 7 13 21 5 5 10 9",
                 history_reorder_size="2 3 4 5 10 11 1 2 3 8",
-                product_name_encoded="1 5 3 2 8 10 7 9",
             ),
             Row(
                 user_id=1,
