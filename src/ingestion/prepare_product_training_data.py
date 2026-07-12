@@ -1,8 +1,8 @@
 import argparse
 from src.common.utils import gcs_join
-from src.common.io import read_parquet
+from src.common.io import read_parquet, write_parquet
 from src.common.spark import create_spark_session
-from pyspark.sql import functions as F, DataFrame, Window
+from pyspark.sql import functions as F, DataFrame, Window, SparkSession
 from pyspark.sql.types import ArrayType, IntegerType
 
 
@@ -150,14 +150,90 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--min-word-freq", type=int, default=5)
     parser.add_argument("--input-dir", required=True)
+    parser.add_argument("--product-name-length", type=int, default=50)
+    parser.add_argument("--encode-length", type=int, default=50)
+    parser.add_argument("--output-dir", required=True)
 
     return parser.parse_args()
+
+
+def build_product_seq_data(
+    spark: SparkSession,
+    raw_dir: str,
+    input_dir: str,
+    output_dir: str,
+    min_word_freq: int = 5,
+    product_name_length: int = 50,
+    encode_length: int = 50,
+) -> None:
+    products = read_parquet(gcs_join(raw_dir, "products"), spark)
+    product_history_data = read_parquet(
+        gcs_join(input_dir, "product_history_data"), spark
+    )
+
+    HISTORY_COLUMNS = [
+        "is_ordered_history",
+        "index_in_order_history",
+        "order_dow_history",
+        "order_hour_history",
+        "days_since_prior_order_history",
+        "order_size_history",
+        "reorder_size_history",
+        "order_number_history",
+    ]
+
+    word_index = build_word_idx(products, min_word_freq)
+    encoded_product_name = encode_product_names(products, word_index)
+
+    df = product_history_data.join(
+        encoded_product_name, how="left", on="product_id"
+    ).withColumn("product_name_encoded", F.coalesce("product_name_encoded", F.lit("")))
+    parsed_seq = parse_string_sequence("product_name_encoded")
+    prod_name, prod_name_length = pad_array(parsed_seq, product_name_length)
+    df = df.withColumn("product_name_encoded", prod_name).withColumn(
+        "product_name_length", prod_name_length.cast("int")
+    )
+
+    for colname in HISTORY_COLUMNS:
+        parsed_col = parse_string_sequence(colname)
+        name, length = pad_array(parsed_col, encode_length)
+        df = df.withColumn(colname, name)
+        if colname == "is_ordered_history":
+            df = df.withColumn("history_length", length.cast("int"))
+
+    df = df.select(
+        "user_id",
+        "product_id",
+        "aisle_id",
+        "department_id",
+        "eval_set",
+        "label",
+        "product_name_encoded",
+        "is_ordered_history",
+        "position_in_order_history",
+        "history_order_size",
+        "history_reorder_size",
+        "order_dows",
+        "order_hours",
+        "days_since_prior_order",
+        "order_numbers",
+        "history_length",
+        "product_name_length",
+    )
+
+    write_parquet(gcs_join(output_dir, "product_training_data"), spark)
 
 
 if __name__ == "__main__":
     args = parse_args()
     spark = create_spark_session("product_training_data")
-    products = read_parquet(gcs_join(args.input_dir, "products"), spark)
-    word_index = build_word_idx(products, args.min_word_freq)
-    df = encode_product_names(products, word_index)
-    df.show(20, truncate=False)
+    build_product_seq_data(
+        raw_dir=args.raw_dir,
+        spark=spark,
+        input_dir=args.input_dir,
+        output_dir=args.output_dir,
+        min_word_freq=args.min_word_freq,
+        product_name_length=args.product_name_length,
+        encode_length=args.encode_length,
+    )
+    spark.stop()
