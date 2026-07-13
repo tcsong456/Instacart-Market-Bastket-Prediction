@@ -1,5 +1,5 @@
 import argparse
-from src.common.utils import gcs_join
+from src.common.utils import gcs_join, pad_array
 from src.common.io import read_parquet, write_parquet
 from src.common.spark import create_spark_session
 from pyspark.sql import functions as F, DataFrame, Window, SparkSession
@@ -42,7 +42,7 @@ def build_word_idx(products: DataFrame, min_word_freq: int = 5) -> DataFrame:
         .select("word", "word_idx")
     )
     word_index = frquent_words.unionByName(rare_words)
-    # print(word_index.count())
+    print(word_index.count())
 
     return word_index
 
@@ -105,33 +105,25 @@ def encode_product_names(products: DataFrame, word_index: DataFrame) -> DataFram
     return result
 
 
-def pad_array(
-    array_column: F.Column,
-    max_length: int,
-) -> tuple[F.Column, F.Column]:
-    """
-    Truncate and right-pad an integer array with zeros.
-
-    Returns:
-        padded_array
-        original_length_after_truncation
-    """
-
-    truncated_array = F.slice(array_column, 1, max_length)
-    seq_length = F.size(truncated_array).cast("int")
-    padding_len = max_length - seq_length
-    padded_array = F.concat(
-        truncated_array, F.array_repeat(F.lit(0).cast("int"), padding_len)
-    )
-
-    return padded_array, seq_length
-
-
 def parse_string_sequence(column_name: str) -> F.Column:
     """
-    Convert a space-separated string such as '1 0 3' into array<int>.
+    Parse a whitespace-delimited string column into an integer array.
+    Null values and empty strings are converted to empty arrays. Otherwise,
+    the string is trimmed, split on whitespace, and each token is cast to an
+    integer.
 
-    Null and empty strings become empty arrays.
+    Args:
+        column_name: Name of the string column containing whitespace-delimited
+            integer values.
+
+    Returns:
+        A Spark array column of integers.
+
+    Examples:
+        "1 2 3" -> [1, 2, 3]
+        " 4  5 " -> [4, 5]
+        "" -> []
+        None -> []
     """
 
     empty_array = F.array().cast(ArrayType(IntegerType()))
