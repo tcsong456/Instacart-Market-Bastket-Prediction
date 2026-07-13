@@ -233,7 +233,7 @@ def build_product_seq_data(
         parsed_col = parse_string_sequence(colname)
         name, _ = pad_array(parsed_col, encode_length)
         df = df.withColumn(colname, name)
-
+    print(df.columns)
     df = df.select(
         "user_id",
         "product_id",
@@ -246,13 +246,13 @@ def build_product_seq_data(
         "history_reorder_size",
         "order_dows",
         "order_hours",
-        "days_since_prior_order",
+        "days_since_prior_orders",
         "order_numbers",
         "history_length",
         "product_name_length",
     )
 
-    write_parquet(gcs_join(output_dir, "product_training_data"), spark)
+    write_parquet(gcs_join(output_dir, "product_training_data"), df)
 
 
 if __name__ == "__main__":

@@ -33,6 +33,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 order_hours="5 6 8 10 12 14 11 9 20 23",
                 days_since_prior_orders="-1 10 5 20 30 40 25 27 33 15",
                 order_numbers="1 2 3 4 5 6 7 8 9 10",
+                eval_set="train",
+                label=1,
             ),
             Row(
                 user_id=2,
@@ -45,6 +47,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 order_hours="5 6 8 10 12 14",
                 days_since_prior_orders="-1 10 5 20 30 40",
                 order_numbers="1 2 3 4 5 6",
+                eval_set="train",
+                label=0,
             ),
             Row(
                 user_id=2,
@@ -57,6 +61,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 order_hours="5 6 8 10 12 14",
                 days_since_prior_orders="-1 10 5 20 30 40",
                 order_numbers="1 2 3 4 5 6",
+                eval_set="test",
+                label=-1,
             ),
             Row(
                 user_id=3,
@@ -69,6 +75,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 order_hours="5 6 8 10",
                 days_since_prior_orders="-1 10 5 20",
                 order_numbers="1 2 3 4",
+                eval_set="prior",
+                label=-1,
             ),
             Row(
                 user_id=3,
@@ -81,6 +89,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 order_hours="5 6 8 10",
                 days_since_prior_orders="-1 10 5 20",
                 order_numbers="1 2 3 4",
+                eval_set="train",
+                label=0,
             ),
             Row(
                 user_id=4,
@@ -93,6 +103,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 order_hours="5 6 8 10 12 14 11 9 20 23 17 0",
                 days_since_prior_orders="-1 10 5 20 30 40 25 27 33 15 21 14",
                 order_numbers="1 2 3 4 5 6 7 8 9 10 11 12",
+                eval_set="train",
+                label=1,
             ),
         ]
     )
@@ -108,17 +120,6 @@ def test_product_seq_data_pipeline(spark, tmp_path):
         encode_length=10,
     )
     actual_df = read_parquet(tmp_path / "product_training_data", spark)
-    actual_df = actual_df.select(
-        "user_id",
-        "product_id",
-        "is_ordered_history",
-        "position_in_order_history",
-        "history_order_size",
-        "history_reorder_size",
-        "product_name_encoded",
-        "history_length",
-        "product_name_length",
-    )
 
     expected_df = spark.createDataFrame(
         [
@@ -136,6 +137,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 product_name_encoded=[1, 5, 3, 2, 8, 10],
                 history_length=10,
                 product_name_length=6,
+                eval_set="train",
+                label=1,
             ),
             Row(
                 user_id=2,
@@ -151,6 +154,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 product_name_encoded=[1, 16, 3, 2, 14, 5],
                 history_length=6,
                 product_name_length=6,
+                eval_set="train",
+                label=0,
             ),
             Row(
                 user_id=2,
@@ -166,6 +171,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 product_name_encoded=[0, 0, 0, 0, 0, 0],
                 history_length=6,
                 product_name_length=0,
+                eval_set="test",
+                label=-1,
             ),
             Row(
                 user_id=3,
@@ -181,6 +188,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 product_name_encoded=[4, 11, 0, 0, 0, 0],
                 history_length=4,
                 product_name_length=2,
+                eval_set="prior",
+                label=-1,
             ),
             Row(
                 user_id=3,
@@ -196,9 +205,11 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 product_name_encoded=[4, 6, 0, 0, 0, 0],
                 history_length=0,
                 product_name_length=2,
+                eval_set="train",
+                label=0,
             ),
             Row(
-                user_id=3,
+                user_id=4,
                 product_id=30,
                 is_ordered_history=[1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
                 position_in_order_history=[1, 0, 0, 2, 0, 0, 0, 0, 0, 11],
@@ -211,6 +222,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 product_name_encoded=[2, 1, 15, 13, 12, 0],
                 history_length=10,
                 product_name_length=5,
+                eval_set="train",
+                label=1,
             ),
         ]
     )
