@@ -80,18 +80,6 @@ def test_build_reorder_size_data(spark, tmp_path):
     expected_schema = StructType(
         [
             StructField("user_id", LongType(), nullable=True),
-            StructField("eval_set", StringType(), nullable=True),
-            StructField(
-                "order_sizes",
-                ArrayType(IntegerType(), containsNull=True),
-                nullable=True,
-            ),
-            StructField(
-                "reorder_sizes",
-                ArrayType(IntegerType(), containsNull=True),
-                nullable=True,
-            ),
-            StructField("label", IntegerType(), nullable=True),
             StructField(
                 "order_dows",
                 ArrayType(IntegerType(), containsNull=True),
@@ -112,6 +100,18 @@ def test_build_reorder_size_data(spark, tmp_path):
                 ArrayType(IntegerType(), containsNull=True),
                 nullable=True,
             ),
+            StructField("eval_set", StringType(), nullable=True),
+            StructField(
+                "order_sizes",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "reorder_sizes",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField("label", IntegerType(), nullable=True),
             StructField("history_length", IntegerType(), nullable=True),
         ]
     )
