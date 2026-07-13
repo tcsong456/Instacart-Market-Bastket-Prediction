@@ -133,13 +133,6 @@ def test_product_seq_data_pipeline(spark, tmp_path):
         [
             StructField("user_id", LongType(), nullable=True),
             StructField("product_id", LongType(), nullable=True),
-            StructField("eval_set", StringType(), nullable=True),
-            StructField("label", LongType(), nullable=True),
-            StructField(
-                "product_name_encoded",
-                ArrayType(IntegerType(), containsNull=True),
-                nullable=True,
-            ),
             StructField(
                 "is_ordered_history",
                 ArrayType(IntegerType(), containsNull=True),
@@ -180,8 +173,15 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 ArrayType(IntegerType(), containsNull=True),
                 nullable=True,
             ),
+            StructField(
+                "product_name_encoded",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
             StructField("history_length", IntegerType(), nullable=True),
             StructField("product_name_length", IntegerType(), nullable=True),
+            StructField("eval_set", StringType(), nullable=True),
+            StructField("label", LongType(), nullable=True),
         ]
     )
     expected_df = spark.createDataFrame(
@@ -292,5 +292,4 @@ def test_product_seq_data_pipeline(spark, tmp_path):
         schema=expected_schema,
     )
 
-    actual_df.printSchema()
     assert_spark_df_equal(actual_df, expected_df, ["user_id", "product_id"])
