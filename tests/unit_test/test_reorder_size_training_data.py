@@ -56,7 +56,7 @@ def test_transform_reorder_size_training_data(spark):
             ),
             StructField(
                 "order_sizes",
-                ArrayType(IntegerType(), containsNull=False),
+                ArrayType(IntegerType(), containsNull=True),
                 nullable=True,
             ),
             StructField(
@@ -81,16 +81,16 @@ def test_transform_reorder_size_training_data(spark):
                 user_id=2,
                 reorders_prev=[],
                 reorders_next=[],
-                order_sizes=[0],
-                reorder_sizes=[0],
+                order_sizes=[],
+                reorder_sizes=[],
                 label=0,
             ),
             Row(
                 user_id=3,
                 reorders_prev=[],
                 reorders_next=[],
-                order_sizes=[0],
-                reorder_sizes=[0],
+                order_sizes=[],
+                reorder_sizes=[],
                 label=0,
             ),
             Row(
@@ -191,10 +191,14 @@ def test_pad_column_arrays(spark):
                 nullable=True,
             ),
             StructField(
-                "order_sizes", ArrayType(LongType(), containsNull=True), nullable=True
+                "order_sizes",
+                ArrayType(LongType(), containsNull=True),
+                nullable=True,
             ),
             StructField(
-                "reorder_sizes", ArrayType(LongType(), containsNull=True), nullable=True
+                "reorder_sizes",
+                ArrayType(LongType(), containsNull=True),
+                nullable=True,
             ),
             StructField("history_length", IntegerType(), nullable=False),
         ]
