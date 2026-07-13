@@ -3,7 +3,7 @@ from src.common.utils import gcs_join, parse_string_sequence, pad_array
 from src.common.spark import create_spark_session
 from src.common.io import read_parquet, write_parquet
 from pyspark.sql import DataFrame, functions as F, SparkSession
-from pyspark.sql.types import ArrayType, StringType
+from pyspark.sql.types import ArrayType, StringType, IntegerType
 
 
 def transform_reorder_size_training_data(user_data: DataFrame) -> DataFrame:
@@ -36,7 +36,7 @@ def transform_reorder_size_training_data(user_data: DataFrame) -> DataFrame:
         .withColumn(
             "order_sizes",
             F.when(
-                (F.size("reorders_prev") == 0), F.array().cast(ArrayType(StringType()))
+                (F.size("reorders_prev") == 0), F.array().cast(ArrayType(IntegerType()))
             ).otherwise(
                 F.expr(
                     """
@@ -51,7 +51,7 @@ def transform_reorder_size_training_data(user_data: DataFrame) -> DataFrame:
         .withColumn(
             "reorder_sizes",
             F.when(
-                (F.size("reorders_prev") == 0), F.array().cast(ArrayType(StringType()))
+                (F.size("reorders_prev") == 0), F.array().cast(ArrayType(IntegerType()))
             ).otherwise(
                 F.expr(
                     """
