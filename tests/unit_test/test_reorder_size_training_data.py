@@ -173,6 +173,11 @@ def test_pad_column_arrays(spark):
         [
             StructField("user_id", LongType(), nullable=True),
             StructField(
+                "order_numbers",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
                 "order_dows", ArrayType(IntegerType(), containsNull=True), nullable=True
             ),
             StructField(
@@ -182,11 +187,6 @@ def test_pad_column_arrays(spark):
             ),
             StructField(
                 "days_since_prior_orders",
-                ArrayType(IntegerType(), containsNull=True),
-                nullable=True,
-            ),
-            StructField(
-                "order_numbers",
                 ArrayType(IntegerType(), containsNull=True),
                 nullable=True,
             ),
