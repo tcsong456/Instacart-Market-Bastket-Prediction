@@ -169,6 +169,36 @@ def test_pad_column_arrays(spark):
         "history_length",
     )
 
+    expected_schema = StructType(
+        [
+            StructField("user_id", LongType(), nullable=True),
+            StructField(
+                "order_dows", ArrayType(IntegerType(), containsNull=True), nullable=True
+            ),
+            StructField(
+                "order_hours",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "days_since_prior_orders",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_numbers",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_sizes", ArrayType(LongType(), containsNull=True), nullable=True
+            ),
+            StructField(
+                "reorder_sizes", ArrayType(LongType(), containsNull=True), nullable=True
+            ),
+            StructField("history_length", IntegerType(), nullable=False),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(
@@ -201,7 +231,8 @@ def test_pad_column_arrays(spark):
                 reorder_sizes=[0, 0, 0, 0, 0, 0, 0],
                 history_length=0,
             ),
-        ]
+        ],
+        schema=expected_schema,
     )
-    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id"])
