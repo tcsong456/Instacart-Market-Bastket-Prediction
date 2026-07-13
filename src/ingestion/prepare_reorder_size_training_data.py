@@ -1,4 +1,4 @@
-from src.common.utils import gcs_join, parse_string_sequence
+from src.common.utils import gcs_join, parse_string_sequence, pad_array
 from src.common.spark import create_spark_session
 from src.common.io import read_parquet
 from pyspark.sql import DataFrame, functions as F
@@ -75,22 +75,60 @@ def transform_reorder_size_training_data(user_data: DataFrame) -> DataFrame:
     return user_data
 
 
+def pad_column_arrays(df: DataFrame, pad_length: int = 30) -> DataFrame:
+    TEMPORAL_COLUMNS = [
+        "order_numbers",
+        "order_dows",
+        "order_hours",
+        "days_since_prior_orders",
+    ]
+    SIZE_COLUMNS = [
+        "order_sizes",
+        "reorder_sizes",
+    ]
+    TOTAL_COLUMNS = TEMPORAL_COLUMNS + SIZE_COLUMNS
+
+    for colname in TEMPORAL_COLUMNS:
+        df = df.withColumn(colname, parse_string_sequence(F.col(colname)))
+
+    for colname in TOTAL_COLUMNS:
+        padded_array, padded_length = pad_array(F.col(colname), pad_length)
+
+        if colname == "reorder_sizes":
+            df = df.withColumn("history_length", padded_length)
+
+        df = df.withColumn(colname, padded_array)
+
+    return df
+
+
 if __name__ == "__main__":
     spark = create_spark_session("reorder_size_training")
     user_data = read_parquet(gcs_join("data", "user_data"), spark)
     df = transform_reorder_size_training_data(user_data)
+    df = pad_column_arrays(df)
+    # df.select(
+    #     "user_id",
+    #     "eval_set",
+    #     "reorders",
+    #     "reorders_prev",
+    #     "reorders_next",
+    #     "order_sizes",
+    #     "reorder_sizes",
+    #     "label",
+    #     "order_dows",
+    #     "order_hours",
+    #     "days_since_prior_orders",
+    #     "order_numbers",
+    #     "history_length"
+    # ).show(1, truncate=False)
     df.select(
-        "user_id",
-        "eval_set",
-        "reorders",
-        "reorders_prev",
-        "reorders_next",
-        "order_sizes",
-        "reorder_sizes",
-        "label",
         "order_dows",
         "order_hours",
         "days_since_prior_orders",
         "order_numbers",
+        "order_sizes",
+        "reorder_sizes",
+        "history_length",
     ).show(1, truncate=False)
     spark.stop()
