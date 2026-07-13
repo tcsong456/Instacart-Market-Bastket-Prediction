@@ -1,7 +1,8 @@
+import argparse
 from src.common.utils import gcs_join, parse_string_sequence, pad_array
 from src.common.spark import create_spark_session
-from src.common.io import read_parquet
-from pyspark.sql import DataFrame, functions as F
+from src.common.io import read_parquet, write_parquet
+from pyspark.sql import DataFrame, functions as F, SparkSession
 from pyspark.sql.types import ArrayType, StringType
 
 
@@ -34,7 +35,9 @@ def transform_reorder_size_training_data(user_data: DataFrame) -> DataFrame:
         .withColumn("reorders_next", parse_string_sequence(F.col("reorders_next"), "_"))
         .withColumn(
             "order_sizes",
-            F.when((F.size("reorders_prev") == 0), F.array(F.lit(0))).otherwise(
+            F.when(
+                (F.size("reorders_prev") == 0), F.array().cast(ArrayType(StringType()))
+            ).otherwise(
                 F.expr(
                     """
                         transform(
@@ -47,7 +50,9 @@ def transform_reorder_size_training_data(user_data: DataFrame) -> DataFrame:
         )
         .withColumn(
             "reorder_sizes",
-            F.when((F.size("reorders_prev") == 0), F.array(F.lit(0))).otherwise(
+            F.when(
+                (F.size("reorders_prev") == 0), F.array().cast(ArrayType(StringType()))
+            ).otherwise(
                 F.expr(
                     """
                         transform(
@@ -102,33 +107,39 @@ def pad_column_arrays(df: DataFrame, pad_length: int = 30) -> DataFrame:
     return df
 
 
-if __name__ == "__main__":
-    spark = create_spark_session("reorder_size_training")
-    user_data = read_parquet(gcs_join("data", "user_data"), spark)
+def build_reorder_size_data(
+    spark: SparkSession, input_dir: str, output_dir: str, maximum_padded_len: int = 30
+) -> None:
+    user_data = read_parquet(gcs_join(input_dir, "user_data"), spark)
     df = transform_reorder_size_training_data(user_data)
-    df = pad_column_arrays(df)
-    # df.select(
-    #     "user_id",
-    #     "eval_set",
-    #     "reorders",
-    #     "reorders_prev",
-    #     "reorders_next",
-    #     "order_sizes",
-    #     "reorder_sizes",
-    #     "label",
-    #     "order_dows",
-    #     "order_hours",
-    #     "days_since_prior_orders",
-    #     "order_numbers",
-    #     "history_length"
-    # ).show(1, truncate=False)
-    df.select(
+    df = pad_column_arrays(df, pad_length=maximum_padded_len)
+    df = df.select(
+        "user_id",
+        "eval_set",
+        "order_sizes",
+        "reorder_sizes",
+        "label",
         "order_dows",
         "order_hours",
         "days_since_prior_orders",
         "order_numbers",
-        "order_sizes",
-        "reorder_sizes",
         "history_length",
-    ).show(1, truncate=False)
+    )
+    write_parquet(gcs_join(output_dir, "reorder_size_training_data"), df)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--maximum-padded-length", type=int, default=30)
+    parser.add_argument("--input-dir", required=True)
+    parser.add_argument("--output-dir", required=True)
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    spark = create_spark_session("reorder_size_training")
+    args = parse_args()
+    build_reorder_size_data(
+        spark, args.input_dir, args.output_dir, args.maximum_padded_length
+    )
     spark.stop()
