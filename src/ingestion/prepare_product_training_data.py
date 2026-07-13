@@ -233,7 +233,7 @@ def build_product_seq_data(
         parsed_col = parse_string_sequence(colname)
         name, _ = pad_array(parsed_col, encode_length)
         df = df.withColumn(colname, name)
-    print(df.columns)
+
     df = df.select(
         "user_id",
         "product_id",

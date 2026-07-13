@@ -2,6 +2,14 @@ from pyspark.sql import Row
 from tests.helper import assert_spark_df_equal
 from src.common.io import write_parquet, read_parquet
 from src.ingestion.prepare_product_training_data import build_product_seq_data
+from pyspark.sql.types import (
+    StructField,
+    StructType,
+    IntegerType,
+    StringType,
+    ArrayType,
+    LongType,
+)
 
 
 def test_product_seq_data_pipeline(spark, tmp_path):
@@ -121,6 +129,61 @@ def test_product_seq_data_pipeline(spark, tmp_path):
     )
     actual_df = read_parquet(tmp_path / "product_training_data", spark)
 
+    expected_schema = StructType(
+        [
+            StructField("user_id", LongType(), nullable=True),
+            StructField("product_id", LongType(), nullable=True),
+            StructField("eval_set", StringType(), nullable=True),
+            StructField("label", LongType(), nullable=True),
+            StructField(
+                "product_name_encoded",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "is_ordered_history",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "position_in_order_history",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "history_order_size",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "history_reorder_size",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_dows",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_hours",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "days_since_prior_orders",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_numbers",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField("history_length", IntegerType(), nullable=True),
+            StructField("product_name_length", IntegerType(), nullable=True),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(
@@ -146,11 +209,11 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 is_ordered_history=[0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
                 position_in_order_history=[0, 0, 2, 4, 1, 0, 0, 0, 0, 0],
                 history_order_size=[3, 3, 10, 7, 13, 21, 0, 0, 0, 0],
+                history_reorder_size=[2, 3, 4, 5, 10, 11, 0, 0, 0, 0],
                 order_dows=[0, 1, 2, 3, 4, 5, 0, 0, 0, 0],
                 order_hours=[5, 6, 8, 10, 12, 14, 0, 0, 0, 0],
                 days_since_prior_orders=[-1, 10, 5, 20, 30, 40, 0, 0, 0, 0],
                 order_numbers=[1, 2, 3, 4, 5, 6, 0, 0, 0, 0],
-                history_reorder_size=[2, 3, 4, 5, 10, 11, 0, 0, 0, 0],
                 product_name_encoded=[1, 16, 3, 2, 14, 5],
                 history_length=6,
                 product_name_length=6,
@@ -225,7 +288,8 @@ def test_product_seq_data_pipeline(spark, tmp_path):
                 eval_set="train",
                 label=1,
             ),
-        ]
+        ],
+        schema=expected_schema,
     )
 
     actual_df.printSchema()
