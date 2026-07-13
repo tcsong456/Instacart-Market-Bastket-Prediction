@@ -2,6 +2,14 @@ from pyspark.sql import Row
 from tests.helper import assert_spark_df_equal
 from src.common.io import read_parquet, write_parquet
 from src.ingestion.prepare_reorder_size_training_data import build_reorder_size_data
+from pyspark.sql.types import (
+    ArrayType,
+    IntegerType,
+    LongType,
+    StringType,
+    StructField,
+    StructType,
+)
 
 
 def test_build_reorder_size_data(spark, tmp_path):
@@ -69,6 +77,44 @@ def test_build_reorder_size_data(spark, tmp_path):
     build_reorder_size_data(spark, tmp_path, tmp_path, 7)
     actual_df = read_parquet(tmp_path / "reorder_size_training_data", spark)
 
+    expected_schema = StructType(
+        [
+            StructField("user_id", LongType(), nullable=True),
+            StructField("eval_set", StringType(), nullable=True),
+            StructField(
+                "order_sizes",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "reorder_sizes",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField("label", IntegerType(), nullable=True),
+            StructField(
+                "order_dows",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_hours",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "days_since_prior_orders",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_numbers",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField("history_length", IntegerType(), nullable=True),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(
@@ -143,7 +189,8 @@ def test_build_reorder_size_data(spark, tmp_path):
                 label=2,
                 history_length=1,
             ),
-        ]
+        ],
+        schema=expected_schema,
     )
-    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id"])
