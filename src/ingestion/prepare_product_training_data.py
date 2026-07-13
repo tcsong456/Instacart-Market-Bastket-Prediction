@@ -225,7 +225,7 @@ def build_product_seq_data(
     padded_history_order, history_order_length = pad_array(
         F.col("_parsed_is_ordered_history"), encode_length
     )
-    df = df.withColumn("is_ordered_history", padded_history_order).df.withColumn(
+    df = df.withColumn("is_ordered_history", padded_history_order).withColumn(
         "history_length", history_order_length.cast("int")
     )
     print(df.columns)
