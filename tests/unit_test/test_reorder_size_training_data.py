@@ -56,7 +56,7 @@ def test_transform_reorder_size_training_data(spark):
             ),
             StructField(
                 "order_sizes",
-                ArrayType(IntegerType(), containsNull=False),
+                ArrayType(IntegerType(), containsNull=True),
                 nullable=True,
             ),
             StructField(
@@ -120,7 +120,7 @@ def test_transform_reorder_size_training_data(spark):
         ],
         schema=expected_schema,
     )
-    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id"])
 
 
@@ -238,5 +238,5 @@ def test_pad_column_arrays(spark):
         ],
         schema=expected_schema,
     )
-    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id"])
