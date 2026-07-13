@@ -1,9 +1,8 @@
 import argparse
-from src.common.utils import gcs_join
+from src.common.utils import gcs_join, pad_array, parse_string_sequence
 from src.common.io import read_parquet, write_parquet
 from src.common.spark import create_spark_session
 from pyspark.sql import functions as F, DataFrame, Window, SparkSession
-from pyspark.sql.types import ArrayType, IntegerType
 
 
 def build_word_idx(products: DataFrame, min_word_freq: int = 5) -> DataFrame:
@@ -42,7 +41,6 @@ def build_word_idx(products: DataFrame, min_word_freq: int = 5) -> DataFrame:
         .select("word", "word_idx")
     )
     word_index = frquent_words.unionByName(rare_words)
-    # print(word_index.count())
 
     return word_index
 
@@ -105,47 +103,6 @@ def encode_product_names(products: DataFrame, word_index: DataFrame) -> DataFram
     return result
 
 
-def pad_array(
-    array_column: F.Column,
-    max_length: int,
-) -> tuple[F.Column, F.Column]:
-    """
-    Truncate and right-pad an integer array with zeros.
-
-    Returns:
-        padded_array
-        original_length_after_truncation
-    """
-
-    truncated_array = F.slice(array_column, 1, max_length)
-    seq_length = F.size(truncated_array).cast("int")
-    padding_len = max_length - seq_length
-    padded_array = F.concat(
-        truncated_array, F.array_repeat(F.lit(0).cast("int"), padding_len)
-    )
-
-    return padded_array, seq_length
-
-
-def parse_string_sequence(column_name: str) -> F.Column:
-    """
-    Convert a space-separated string such as '1 0 3' into array<int>.
-
-    Null and empty strings become empty arrays.
-    """
-
-    empty_array = F.array().cast(ArrayType(IntegerType()))
-
-    return F.when(
-        F.col(column_name).isNull() | (F.trim(F.col(column_name)) == ""),
-        empty_array,
-    ).otherwise(
-        F.transform(
-            F.split(F.trim(F.col(column_name)), r"\s+"), lambda x: x.cast("int")
-        )
-    )
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--min-word-freq", type=int, default=5)
@@ -153,6 +110,7 @@ def parse_args():
     parser.add_argument("--product-name-length", type=int, default=50)
     parser.add_argument("--encode-length", type=int, default=50)
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--raw-dir", required=True)
 
     return parser.parse_args()
 
@@ -206,7 +164,7 @@ def build_product_seq_data(
             "product_name_encoded", F.coalesce("product_name_encoded", F.lit(""))
         )
         .withColumn(
-            "_parsed_product_name", parse_string_sequence("product_name_encoded")
+            "_parsed_product_name", parse_string_sequence(F.col("product_name_encoded"))
         )
     )
 
@@ -220,7 +178,7 @@ def build_product_seq_data(
     )
 
     df = df.withColumn(
-        "_parsed_is_ordered_history", parse_string_sequence("is_ordered_history")
+        "_parsed_is_ordered_history", parse_string_sequence(F.col("is_ordered_history"))
     )
     padded_history_order, history_order_length = pad_array(
         F.col("_parsed_is_ordered_history"), encode_length
@@ -230,7 +188,7 @@ def build_product_seq_data(
     )
 
     for colname in HISTORY_COLUMNS:
-        parsed_col = parse_string_sequence(colname)
+        parsed_col = parse_string_sequence(F.col(colname))
         name, _ = pad_array(parsed_col, encode_length)
         df = df.withColumn(colname, name)
 

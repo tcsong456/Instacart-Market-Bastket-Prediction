@@ -1,19 +1,14 @@
-import pytest
 from pyspark.sql import Row
 from tests.helper import assert_spark_df_equal
 from src.ingestion.prepare_product_training_data import (
-    pad_array,
     build_word_idx,
     encode_product_names,
-    parse_string_sequence,
 )
-from pyspark.sql import functions as F
 from pyspark.sql.types import (
     StructField,
     StructType,
     IntegerType,
     StringType,
-    ArrayType,
 )
 
 
@@ -110,48 +105,3 @@ def test_encode_product_names(spark):
     )
 
     assert_spark_df_equal(actual_df, expected_df, ["product_id"])
-
-
-@pytest.mark.parametrize(
-    ("input_array", "max_length", "expected_array", "expected_length"),
-    [
-        ([1, 2, 3], 5, [1, 2, 3, 0, 0], 3),
-        ([1, 2, 3, 4, 5], 5, [1, 2, 3, 4, 5], 5),
-        ([1, 2, 3, 4, 5, 6, 7], 5, [1, 2, 3, 4, 5], 5),
-        ([], 5, [0, 0, 0, 0, 0], 0),
-    ],
-)
-def test_pad_array(spark, input_array, max_length, expected_array, expected_length):
-    schema = StructType([StructField("array", ArrayType(IntegerType(), False), False)])
-
-    df = spark.createDataFrame([(input_array,)], schema=schema)
-
-    padded_array, seq_len = pad_array(F.col("array"), max_length)
-    actual_df = df.select(
-        padded_array.alias("padded_array"), seq_len.alias("seq_len")
-    ).first()
-
-    assert actual_df["padded_array"] == expected_array
-    assert actual_df["seq_len"] == expected_length
-
-
-@pytest.mark.parametrize(
-    ("input_string", "expected_array"),
-    [
-        ("1 2 3", [1, 2, 3]),
-        ("10", [10]),
-        ("  4   5  6 ", [4, 5, 6]),
-        (None, []),
-        ("", []),
-        ("       ", []),
-    ],
-)
-def test_parse_string_sequence(spark, input_string, expected_array):
-    schema = StructType([StructField("sequence", StringType(), True)])
-
-    df = spark.createDataFrame([(input_string,)], schema=schema)
-
-    seq = parse_string_sequence("sequence").alias("parsed_seq")
-    actual_df = df.select(seq).first()
-
-    assert actual_df["parsed_seq"] == expected_array

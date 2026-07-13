@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from pyspark.sql import DataFrame, functions as F
+from pyspark.sql import DataFrame, functions as F, Column
 from pyspark.sql.types import (
     StructField,
     StructType,
@@ -9,6 +9,7 @@ from pyspark.sql.types import (
     IntegerType,
     StringType,
     DoubleType,
+    ArrayType,
 )
 
 
@@ -80,3 +81,60 @@ def partition_distribution(df: DataFrame) -> None:
         .orderBy("partition_id")
         .show(100, truncate=False)
     )
+
+
+def pad_array(
+    array_column: F.Column,
+    max_length: int,
+) -> tuple[F.Column, F.Column]:
+    """
+    Truncate or pad an integer array to a fixed length.
+
+    Args:
+        array_column: Spark array column containing integer values.
+        max_length: Desired output array length.
+
+    Returns:
+        A tuple containing:
+            - padded_array: Array column of exactly ``max_length`` elements.
+            - seq_length: Integer column representing the original sequence
+              length after truncation (i.e. ``min(original_length, max_length)``).
+    """
+
+    truncated_array = F.slice(array_column, 1, max_length)
+    seq_length = F.size(truncated_array).cast("int")
+    padding_len = max_length - seq_length
+    padded_array = F.concat(
+        truncated_array, F.array_repeat(F.lit(0).cast("int"), padding_len)
+    )
+
+    return padded_array, seq_length
+
+
+def parse_string_sequence(column: Column, pattern: str = r"\s+") -> F.Column:
+    """
+    Parse a whitespace-delimited string column into an integer array.
+    Null values and empty strings are converted to empty arrays. Otherwise,
+    the string is trimmed, split on whitespace, and each token is cast to an
+    integer.
+
+    Args:
+        column_name: A column containing whitespace-delimited
+            integer values.
+
+    Returns:
+        A Spark array column of integers.
+
+    Examples:
+        "1 2 3" -> [1, 2, 3]
+        " 4  5 " -> [4, 5]
+        "" -> []
+        None -> []
+    """
+
+    empty_array = F.array().cast(ArrayType(IntegerType()))
+
+    return F.when(
+        column.isNull() | (F.trim(column) == ""),
+        empty_array,
+    ).otherwise(F.transform(F.split(F.trim(column), pattern), lambda x: x.cast("int")))
