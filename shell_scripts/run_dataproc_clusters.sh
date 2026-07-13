@@ -56,12 +56,25 @@ python -m zipfile -c src.zip src
 #     --raw-dir=gs://instacart-bronze-8f061ed7/$file \
 #     --output-dir=gs://instacart-silver-8f061ed7/$file/product_history_data
 
+# gcloud dataproc jobs submit pyspark \
+#     src/ingestion/create_aisle_history_data.py \
+#     --cluster=instacart-dataproc-cluster-8f061ed7 \
+#     --region=europe-west1 \
+#     --py-files=src.zip \
+#     -- \
+#     --input-dir=gs://instacart-silver-8f061ed7/$file \
+#     --raw-dir=gs://instacart-bronze-8f061ed7/$file \
+#     --output-dir=gs://instacart-silver-8f061ed7/$file
+
 gcloud dataproc jobs submit pyspark \
-    src/ingestion/create_aisle_history_data.py \
-    --cluster=instacart-dataproc-cluster-8f061ed7 \
-    --region=europe-west1 \
-    --py-files=src.zip \
-    -- \
-    --input-dir=gs://instacart-silver-8f061ed7/$file \
-    --raw-dir=gs://instacart-bronze-8f061ed7/$file \
-    --output-dir=gs://instacart-silver-8f061ed7/$file
+    src/ingestion/prepare_product_training_data.py \
+        --cluster=instacart-dataproc-cluster-8f061ed7 \
+        --region=europe-west1 \
+        --py-files=src.zip \
+        -- \
+        --input-dir gs://instacart-silver-8f061ed7/$file \
+        --raw-dir gs://instacart-bronze-8f061ed7/$file \
+        --output-dir gs://instacart-gold-8f061ed7/$file \
+        --min-word-freq 10 \
+        --product-name-length 30 \
+        --encode-length 100

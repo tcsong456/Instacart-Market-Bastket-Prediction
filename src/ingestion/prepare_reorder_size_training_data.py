@@ -1,0 +1,96 @@
+from src.common.utils import gcs_join, parse_string_sequence
+from src.common.spark import create_spark_session
+from src.common.io import read_parquet
+from pyspark.sql import DataFrame, functions as F
+from pyspark.sql.types import ArrayType, StringType
+
+
+def transform_reorder_size_training_data(user_data: DataFrame) -> DataFrame:
+    user_data = (
+        user_data.withColumn(
+            "reorders",
+            F.when(
+                F.col("reorders").isNull() | (F.trim(F.col("reorders")) == ""),
+                F.array().cast(ArrayType(StringType())),
+            ).otherwise(F.split(F.trim(F.col("reorders")), r"\s+")),
+        )
+        .withColumn(
+            "reorders_prev",
+            F.when(
+                (F.size("reorders") > 1),
+                F.slice("reorders", 1, F.size(F.col("reorders")) - 1),
+            ).otherwise(F.col("reorders")),
+        )
+        .withColumn(
+            "reorders_next",
+            F.when((F.size("reorders") > 1), F.element_at("reorders", -1)).otherwise(
+                F.lit("")
+            ),
+        )
+        .withColumn(
+            "reorders_prev",
+            F.transform("reorders_prev", lambda x: parse_string_sequence(x, "_")),
+        )
+        .withColumn("reorders_next", parse_string_sequence(F.col("reorders_next"), "_"))
+        .withColumn(
+            "order_sizes",
+            F.when((F.size("reorders_prev") == 0), F.array(F.lit(0))).otherwise(
+                F.expr(
+                    """
+                        transform(
+                            reorders_prev,
+                            x -> cast(size(x) as int)
+                        )
+                    """
+                )
+            ),
+        )
+        .withColumn(
+            "reorder_sizes",
+            F.when((F.size("reorders_prev") == 0), F.array(F.lit(0))).otherwise(
+                F.expr(
+                    """
+                        transform(
+                            reorders_prev,
+                            x -> cast(aggregate(x, 0, (acc, v) -> acc + v) as int)
+                        )
+                    """
+                )
+            ),
+        )
+        .withColumn(
+            "label",
+            F.expr(
+                """
+                    aggregate(
+                        reorders_next,
+                        0,
+                        (acc, v) -> acc + v
+                    )
+                """
+            ),
+        )
+    )
+
+    return user_data
+
+
+if __name__ == "__main__":
+    spark = create_spark_session("reorder_size_training")
+    user_data = read_parquet(gcs_join("data", "user_data"), spark)
+    df = transform_reorder_size_training_data(user_data)
+    df.select(
+        "user_id",
+        "eval_set",
+        "reorders",
+        "reorders_prev",
+        "reorders_next",
+        "order_sizes",
+        "reorder_sizes",
+        "label",
+        "order_dows",
+        "order_hours",
+        "days_since_prior_orders",
+        "order_numbers",
+    ).show(1, truncate=False)
+    spark.stop()

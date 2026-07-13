@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from pyspark.sql import DataFrame, functions as F
+from pyspark.sql import DataFrame, functions as F, Column
 from pyspark.sql.types import (
     StructField,
     StructType,
@@ -9,6 +9,7 @@ from pyspark.sql.types import (
     IntegerType,
     StringType,
     DoubleType,
+    ArrayType,
 )
 
 
@@ -108,3 +109,32 @@ def pad_array(
     )
 
     return padded_array, seq_length
+
+
+def parse_string_sequence(column: Column, pattern: str = r"\s+") -> F.Column:
+    """
+    Parse a whitespace-delimited string column into an integer array.
+    Null values and empty strings are converted to empty arrays. Otherwise,
+    the string is trimmed, split on whitespace, and each token is cast to an
+    integer.
+
+    Args:
+        column_name: A column containing whitespace-delimited
+            integer values.
+
+    Returns:
+        A Spark array column of integers.
+
+    Examples:
+        "1 2 3" -> [1, 2, 3]
+        " 4  5 " -> [4, 5]
+        "" -> []
+        None -> []
+    """
+
+    empty_array = F.array().cast(ArrayType(IntegerType()))
+
+    return F.when(
+        column.isNull() | (F.trim(column) == ""),
+        empty_array,
+    ).otherwise(F.transform(F.split(F.trim(column), pattern), lambda x: x.cast("int")))
