@@ -186,7 +186,7 @@ def build_product_seq_data(
     product_history_data = read_parquet(
         gcs_join(input_dir, "product_history_data"), spark
     )
-    print(product_history_data.columns)
+
     HISTORY_COLUMNS = [
         "position_in_order_history",
         "order_dows",
@@ -228,7 +228,7 @@ def build_product_seq_data(
     df = df.withColumn("is_ordered_history", padded_history_order).withColumn(
         "history_length", history_order_length.cast("int")
     )
-    print(df.columns)
+
     for colname in HISTORY_COLUMNS:
         parsed_col = parse_string_sequence(colname)
         name, _ = pad_array(parsed_col, encode_length)
