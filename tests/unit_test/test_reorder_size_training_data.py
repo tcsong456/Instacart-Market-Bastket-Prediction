@@ -191,10 +191,10 @@ def test_pad_column_arrays(spark):
                 nullable=True,
             ),
             StructField(
-                "order_sizes", ArrayType(LongType(), containsNull=True), nullable=True
+                "order_sizes", ArrayType(IntegerType(), containsNull=True), nullable=True
             ),
             StructField(
-                "reorder_sizes", ArrayType(LongType(), containsNull=True), nullable=True
+                "reorder_sizes", ArrayType(IntegerType(), containsNull=True), nullable=True
             ),
             StructField("history_length", IntegerType(), nullable=False),
         ]
