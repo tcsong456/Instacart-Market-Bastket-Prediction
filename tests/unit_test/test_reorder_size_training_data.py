@@ -3,6 +3,13 @@ from tests.helper import assert_spark_df_equal
 from src.ingestion.prepare_reorder_size_training_data import (
     transform_reorder_size_training_data,
 )
+from pyspark.sql.types import (
+    ArrayType,
+    IntegerType,
+    LongType,
+    StructField,
+    StructType,
+)
 
 
 def test_transform_reorder_size_training_data(spark):
@@ -27,6 +34,55 @@ def test_transform_reorder_size_training_data(spark):
         "label",
     )
 
+    expected_schema = StructType(
+        [
+            StructField(
+                "user_id",
+                LongType(),
+                nullable=True,
+            ),
+            StructField(
+                "reorders_prev",
+                ArrayType(
+                    ArrayType(
+                        IntegerType(),
+                        containsNull=True,
+                    ),
+                    containsNull=True,
+                ),
+                nullable=True,
+            ),
+            StructField(
+                "reorders_next",
+                ArrayType(
+                    IntegerType(),
+                    containsNull=True,
+                ),
+                nullable=True,
+            ),
+            StructField(
+                "order_sizes",
+                ArrayType(
+                    IntegerType(),
+                    containsNull=False,
+                ),
+                nullable=True,
+            ),
+            StructField(
+                "reorder_sizes",
+                ArrayType(
+                    IntegerType(),
+                    containsNull=True,
+                ),
+                nullable=True,
+            ),
+            StructField(
+                "label",
+                IntegerType(),
+                nullable=True,
+            ),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(
@@ -77,7 +133,8 @@ def test_transform_reorder_size_training_data(spark):
                 reorder_sizes=[0],
                 label=2,
             ),
-        ]
+        ],
+        schema=expected_schema,
     )
-    print(actual_df.printSchema())
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id"])
