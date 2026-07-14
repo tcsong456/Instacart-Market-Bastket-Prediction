@@ -69,6 +69,7 @@ def test_parse_aisle_seq_data(spark):
 
     expected_schema = StructType(
         [
+            StructField("user_id", LongType(), nullable=True),
             StructField(
                 "is_ordered_history",
                 ArrayType(IntegerType(), containsNull=True),
@@ -109,7 +110,6 @@ def test_parse_aisle_seq_data(spark):
                 ArrayType(IntegerType(), containsNull=True),
                 nullable=True,
             ),
-            StructField("user_id", LongType(), nullable=True),
             StructField("history_length", IntegerType(), nullable=False),
         ]
     )
