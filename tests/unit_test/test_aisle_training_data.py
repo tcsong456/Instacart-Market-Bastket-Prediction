@@ -4,6 +4,13 @@ from src.ingestion.prepare_aisle_training_data import (
     parse_aisle_seq_data,
     PARSE_COLUMNS,
 )
+from pyspark.sql.types import (
+    ArrayType,
+    IntegerType,
+    LongType,
+    StructField,
+    StructType,
+)
 
 
 def test_parse_aisle_seq_data(spark):
@@ -60,6 +67,52 @@ def test_parse_aisle_seq_data(spark):
     actual_df = parse_aisle_seq_data(df, 5)
     actual_df = actual_df.select(wanted_columns)
 
+    expected_schema = StructType(
+        [
+            StructField(
+                "is_ordered_history",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "position_in_order",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "num_products_from_aisle",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "aisle_history_size",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_dows",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_hours",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "days_since_prior_orders",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField(
+                "order_numbers",
+                ArrayType(IntegerType(), containsNull=True),
+                nullable=True,
+            ),
+            StructField("user_id", LongType(), nullable=True),
+            StructField("history_length", IntegerType(), nullable=False),
+        ]
+    )
     expected_df = spark.createDataFrame(
         [
             Row(
@@ -110,7 +163,8 @@ def test_parse_aisle_seq_data(spark):
                 order_numbers=[1, 0, 0, 0, 0],
                 history_length=0,
             ),
-        ]
+        ],
+        schema=expected_schema,
     )
-    actual_df.printSchema()
+
     assert_spark_df_equal(actual_df, expected_df, ["user_id"])
